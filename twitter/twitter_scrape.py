@@ -16,7 +16,7 @@ for i, tweet in enumerate(sntwitter.TwitterSearchScraper(f"{query} since:{start_
         'content': tweet.rawContent,
         "username": tweet.user.username,
         "followersCount": tweet.user.followersCount,
-        "mentionedUsers": [user.username for user in tweet.mentionedUsers] if tweet.mentionedUsers else None,
+        "mentionedUsers": ",".join([user.username for user in tweet.mentionedUsers]) if tweet.mentionedUsers else None,
         "retweetCount": tweet.retweetCount,
         "replyCount": tweet.replyCount,
         "inReplyToUser": tweet.inReplyToUser.username if tweet.inReplyToUser else None,

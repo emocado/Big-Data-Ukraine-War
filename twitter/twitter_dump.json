@@ -27,7 +27,7 @@
         "content": "@CoinDesk @amitoj Blame Ukraine war because of crypto \ud83d\ude02",
         "username": "ethguzzler",
         "followersCount": 166,
-        "mentionedUsers": ["CoinDesk", "amitoj"],
+        "mentionedUsers": "CoinDesk,amitoj",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "CoinDesk"
@@ -71,7 +71,7 @@
         "content": "@Janamejayan @JIX5A @kanimozhi @maidros78 The people of Ukraine are facing a terrorist state that is using inhumane methods to defeat them. The world must stand with them in their struggle against terrorism. #RussiaIsATerroristState #UkraineWar",
         "username": "KiraMcgrath5",
         "followersCount": 0,
-        "mentionedUsers": ["Janamejayan", "JIX5A", "kanimozhi", "maidros78"],
+        "mentionedUsers": "Janamejayan,JIX5A,kanimozhi,maidros78",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "Janamejayan"
@@ -93,7 +93,7 @@
         "content": "@skadefron The use of thermobaric shells against Ukrainian cities is a barbaric act that cannot be justified. Russia must be held accountable for its actions. #RuWarCrimes_UW #UkraineWar",
         "username": "KiraMcgrath5",
         "followersCount": 0,
-        "mentionedUsers": ["skadefron"],
+        "mentionedUsers": "skadefron",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "skadefron"
@@ -126,7 +126,7 @@
         "content": "@sushilkedia @Samarth_6 Chaliye Sushil Ji. Aap hi bata dijiye kitne ke neeche nahin girega? Give a figure instead of a long bhashan. Like the \u201cday the first bullet is fired\u201d theory you picked when Ukraine War started.",
         "username": "Iqbal0866",
         "followersCount": 23,
-        "mentionedUsers": ["sushilkedia", "Samarth_6"],
+        "mentionedUsers": "sushilkedia,Samarth_6",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "sushilkedia"
@@ -159,7 +159,7 @@
         "content": "@mohamejjjj The people of Ukraine are fighting for their freedom and their right to live in peace. The world must stand with them in their struggle against terrorism. #UkraineWar #ArmUkraineNow",
         "username": "KiraMcgrath5",
         "followersCount": 0,
-        "mentionedUsers": ["mohamejjjj"],
+        "mentionedUsers": "mohamejjjj",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "mohamejjjj"
@@ -214,7 +214,7 @@
         "content": "As if Covid,Russia and Ukraine War didnt affect Nigeria and Ivory Coast too.Shameless people.\nBegging for vaccines too\nEiiii\n@AnnanPerry",
         "username": "dannyaslan124",
         "followersCount": 951,
-        "mentionedUsers": ["AnnanPerry"],
+        "mentionedUsers": "AnnanPerry",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": null
@@ -236,7 +236,7 @@
         "content": "@UKLabour But not bankrupt like the last Liebour Government did, and they didn't have a pandemic and Ukraine war to deal with.",
         "username": "surelock_",
         "followersCount": 505,
-        "mentionedUsers": ["UKLabour"],
+        "mentionedUsers": "UKLabour",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "UKLabour"
@@ -258,7 +258,7 @@
         "content": "The Ukraine war is changing how the Pentagon buys weapons https://t.co/ynHcn0sHxi via @politico",
         "username": "natalyahmelik",
         "followersCount": 4,
-        "mentionedUsers": ["politico"],
+        "mentionedUsers": "politico",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": null
@@ -291,7 +291,7 @@
         "content": "@CaelorumCustos The use of thermobaric shells by Russia against Ukrainian cities is a cruel and inhumane act that must be condemned. The world must stand with Ukraine in their fight against terrorism. #RuWarCrimes_UW #UkraineWar",
         "username": "KiraMcgrath5",
         "followersCount": 0,
-        "mentionedUsers": ["CaelorumCustos"],
+        "mentionedUsers": "CaelorumCustos",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "CaelorumCustos"
@@ -313,7 +313,7 @@
         "content": "Khazarian Zionist Ukraine War Crime - Secret Agenda. Jeff Rense and Mitchell Henderson https://t.co/wH3hxF7MiD via @BitChute",
         "username": "Fluffypuffin3",
         "followersCount": 446,
-        "mentionedUsers": ["Bitchute"],
+        "mentionedUsers": "Bitchute",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": null
@@ -357,7 +357,7 @@
         "content": "@amone_boj The people of Ukraine are facing a terrorist state that is willing to use any means necessary to achieve its goals. The world must not allow this to happen. #RussiaIsATerroristState #UkraineWar",
         "username": "KiraMcgrath5",
         "followersCount": 0,
-        "mentionedUsers": ["amone_boj"],
+        "mentionedUsers": "amone_boj",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "amone_boj"
@@ -390,7 +390,7 @@
         "content": "@POTUS What about Ukraine war front and Zelenskyy?",
         "username": "fazlurr58945839",
         "followersCount": 1571,
-        "mentionedUsers": ["POTUS"],
+        "mentionedUsers": "POTUS",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "POTUS"
@@ -588,7 +588,7 @@
         "content": "@GeraldKunzmann @Slocum @MiRo_SPD Die Ukraine war noch nie neutral. Merk dir das!",
         "username": "peter_gunterman",
         "followersCount": 454,
-        "mentionedUsers": ["GeraldKunzmann", "Slocum", "MiRo_SPD"],
+        "mentionedUsers": "GeraldKunzmann,Slocum,MiRo_SPD",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "GeraldKunzmann"
@@ -599,7 +599,7 @@
         "content": "\ud83d\udd34TV9 Bharatvarsh Live | Russia-Ukraine War\u0964 Rahul Gandhi \u0964 Umesh Pal Mur... https://t.co/CcuHC1S5XV via @YouTube",
         "username": "Pradeeptv9",
         "followersCount": 20,
-        "mentionedUsers": ["YouTube"],
+        "mentionedUsers": "YouTube",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": null
@@ -632,7 +632,7 @@
         "content": "@TreasChest Austria's Justice Minister Alma Zadic wants to strengthen the International Court of Justice in the fight against war crimes in the Ukraine war",
         "username": "Springer866",
         "followersCount": 172,
-        "mentionedUsers": ["TreasChest"],
+        "mentionedUsers": "TreasChest",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "TreasChest"
@@ -643,7 +643,7 @@
         "content": "@BFta116 Im heutigen @ardmoma berichtet  @TobiasDammers\nsogar \u00fcber den Trauermarsch f\u00fcr den \"ber\u00fchmten\" Dmitro Kzjubailo. Mit keinem Wort wird dabei auch nur erw\u00e4hnt, dass er F\u00fchrer des faschistischen \"Rechten Sektor\" in der Ukraine war. Unfassbar, so eine Berichterstattung.",
         "username": "FrankLaubenburg",
         "followersCount": 861,
-        "mentionedUsers": ["BFta116", "ardmoma", "TobiasDammers"],
+        "mentionedUsers": "BFta116,ardmoma,TobiasDammers",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "BFta116"
@@ -654,12 +654,7 @@
         "content": "@DimaZeniuk @SpaceXStarlink @elonmusk @SpaceX If the sat to cell service can be done sooner than later, and if (big if) current cells can access the sats then...anyone, anywhere can find out real time, current information wrt what's going on.\nThink: Russian-Ukraine war (or SMO, if you're Russian)\nIran's gov hold on it's\u2026",
         "username": "LinneaBlu",
         "followersCount": 28,
-        "mentionedUsers": [
-            "DimaZeniuk",
-            "SpaceXStarlink",
-            "elonmusk",
-            "SpaceX"
-        ],
+        "mentionedUsers": "DimaZeniuk,SpaceXStarlink,elonmusk,SpaceX",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "DimaZeniuk"
@@ -670,7 +665,7 @@
         "content": "@NormalGuy223 @ValValpuriam Meaning the Ukraine war is an economic war, trying to protect the USD. What happens when no one borrows from one of the world's largest lenders?",
         "username": "GrantT68341073",
         "followersCount": 765,
-        "mentionedUsers": ["NormalGuy223", "ValValpuriam"],
+        "mentionedUsers": "NormalGuy223,ValValpuriam",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "GrantT68341073"
@@ -681,13 +676,7 @@
         "content": "Congratulations @JoeBiden @POTUS on Collapse of Banking System in the United States of America, and you boost America is a Super Power. But US has all resources are diverted towards Ukraine War but millions of Homeless without place to live &amp; eat.\n@BostonGlobe @USATODAY @BBCWorld",
         "username": "ev_mobility",
         "followersCount": 67,
-        "mentionedUsers": [
-            "JoeBiden",
-            "POTUS",
-            "BostonGlobe",
-            "USATODAY",
-            "BBCWorld"
-        ],
+        "mentionedUsers": "JoeBiden,POTUS,BostonGlobe,USATODAY,BBCWorld",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": null
@@ -742,7 +731,7 @@
         "content": "@Newsweek Economy crash is coming soon because this is a planned continuation of Great Reset which started with Covid-19 Pandemic then Ukraine war then increasing interest rates to a degree to crash the world economies &amp; reason is to prevent BRICS alliance from overcoming dollar dominance",
         "username": "dYu7vug97v2Qcqh",
         "followersCount": 968,
-        "mentionedUsers": ["Newsweek"],
+        "mentionedUsers": "Newsweek",
         "retweetCount": 1,
         "replyCount": 0,
         "inReplyToUser": "Newsweek"
@@ -786,7 +775,7 @@
         "content": "@KimDotcom l dream about walking soon... it's not the 6 days ago. The #Ukraine war dest",
         "username": "AliAaisack",
         "followersCount": 128,
-        "mentionedUsers": ["KimDotcom"],
+        "mentionedUsers": "KimDotcom",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "KimDotcom"
@@ -819,7 +808,7 @@
         "content": "@thecoastguy $400 billion either paid for by taxes or inflation by printing money twice the cost of Ukraine war",
         "username": "radwyn",
         "followersCount": 58,
-        "mentionedUsers": ["thecoastguy"],
+        "mentionedUsers": "thecoastguy",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "thecoastguy"
@@ -863,7 +852,7 @@
         "content": "@TheInsiderPaper Economy crash is coming soon because this is a planned continuation of Great Reset which started with Covid-19 Pandemic then Ukraine war then increasing interest rates to a degree to crash the world economies &amp; reason is to prevent BRICS alliance from overcoming dollar dominance",
         "username": "dYu7vug97v2Qcqh",
         "followersCount": 968,
-        "mentionedUsers": ["TheInsiderPaper"],
+        "mentionedUsers": "TheInsiderPaper",
         "retweetCount": 1,
         "replyCount": 1,
         "inReplyToUser": "TheInsiderPaper"
@@ -874,7 +863,7 @@
         "content": "@WayneDupreeShow I think that the Russia Ukraine war is a tragedy. Russia should have never invaded Ukraine. However nobody knows who is winning this war?!! Could it be a victory for Ukraine? Could it be a victory for Russia? China will end this war. https://t.co/lvrE2uzBMH",
         "username": "JNovember1101",
         "followersCount": 7,
-        "mentionedUsers": ["WayneDupreeShow"],
+        "mentionedUsers": "WayneDupreeShow",
         "retweetCount": 0,
         "replyCount": 1,
         "inReplyToUser": "WayneDupreeShow"
@@ -962,7 +951,7 @@
         "content": "Russia Ukraine War: Casualties mount in Bakhmut as battle for city rages\nhttps://t.co/lMaDdzHg9E @ThePageOneAsia #Russia #Ukraine #RussiaUkraineWar\ufe0f #BAKHMUT #city #battle #Donetsk #region",
         "username": "ThePageOneAsia",
         "followersCount": 2013,
-        "mentionedUsers": ["ThePageOneAsia"],
+        "mentionedUsers": "ThePageOneAsia",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": null
@@ -973,7 +962,7 @@
         "content": "@RepMattGaetz @MariaTeresa @MeetThePress Ukraine War= Elites ATM. Covid Vaccines and tests = Elites (bill Gates) ATM.",
         "username": "funnyhu15535348",
         "followersCount": 832,
-        "mentionedUsers": ["RepMattGaetz", "MariaTeresa", "MeetThePress"],
+        "mentionedUsers": "RepMattGaetz,MariaTeresa,MeetThePress",
         "retweetCount": 0,
         "replyCount": 0,
         "inReplyToUser": "RepMattGaetz"
@@ -984,7 +973,7 @@
         "content": "@CookieBot1254 @Blanjipan yes, you can? Look at what Europe has done in the wake of the ukraine war - hydrocarbon producers like Norway and the Netherlands expanded production while making an unprecedented investment in renewables.\n\nhttps://t.co/JMUDxLuVay",
         "username": "GalenMetzger1",
         "followersCount": 11513,
-        "mentionedUsers": ["CookieBot1254", "Blanjipan"],
+        "mentionedUsers": "CookieBot1254,Blanjipan",
         "retweetCount": 0,
         "replyCount": 1,
         "inReplyToUser": "CookieBot1254"
