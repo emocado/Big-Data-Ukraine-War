@@ -32,18 +32,24 @@ job = Job(glue_context)
 job.init(args['JOB_NAME'], args)
 
 # Parameters
-glue_db = "twitter-crawler-database"
-glue_tbl = "project" # data catalog table
-s3_write_path = "s3://wklee-is459/project_write"
+bucket = "wklee-is459"
+s3_write_path = f"s3://{bucket}/project_write"
+folder="project/"
 
 
 #########################################
 ### EXTRACT (READ DATA)
 #########################################
-dynamic_frame_read = glue_context.create_dynamic_frame.from_catalog(
-    database = glue_db,
-    table_name = glue_tbl
-)
+s3 = boto3.resource('s3')
+bucket = s3.Bucket(bucket)
+objects = list(bucket.objects.filter(Prefix=folder))
+objects.sort(key=lambda x: x.last_modified)
+latest_file = objects[-1].key
+
+dynamic_frame_read = glue_context.create_dynamic_frame_from_options(
+    connection_type="s3", format="json",
+    connection_options={"paths": [f"s3://{bucket}/{latest_file}"]},
+    format_option={"jsonPath": "$[*]", "multiline": True})
 
 # Convert dynamic frame to data frame to use standard pyspark functions
 data_frame = dynamic_frame_read.toDF().toPandas()
