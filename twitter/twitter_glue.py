@@ -32,27 +32,34 @@ job = Job(glue_context)
 job.init(args['JOB_NAME'], args)
 
 # Parameters
+glue_db = "twitter-crawler-database"
+glue_tbl = "project" # data catalog table
+folder = "project"
 bucket = "wklee-is459"
-s3_write_path = f"s3://{bucket}/project_write"
-folder="project/"
-
+output_folder = "project_write"
+s3_write_path = f"s3://{bucket}/{output_folder}"
 
 #########################################
 ### EXTRACT (READ DATA)
 #########################################
+dynamic_frame_read = glue_context.create_dynamic_frame.from_catalog(
+    database = glue_db,
+    table_name = glue_tbl
+)
+
+# Convert dynamic frame to data frame to use standard pyspark functions
+data_frame = dynamic_frame_read.toDF().toPandas()
+
+# Get latest file name which is also the timestamp 
 s3 = boto3.resource('s3')
 bucket = s3.Bucket(bucket)
 objects = list(bucket.objects.filter(Prefix=folder))
 objects.sort(key=lambda x: x.last_modified)
 latest_file = objects[-1].key
+time_stamp = latest_file.lstrip(f"{folder}/").rstrip(".json")
 
-dynamic_frame_read = glue_context.create_dynamic_frame_from_options(
-    connection_type="s3", format="json",
-    connection_options={"paths": [f"s3://{bucket}/{latest_file}"]},
-    format_option={"jsonPath": "$[*]", "multiline": True})
-
-# Convert dynamic frame to data frame to use standard pyspark functions
-data_frame = dynamic_frame_read.toDF().toPandas()
+# Extract out tweets of that timestamp
+data_frame = data_frame[data_frame['timeStamp'] == time_stamp]
 
 
 #########################################
@@ -92,6 +99,6 @@ for key in sentiments[0].keys():
 ### LOAD (WRITE DATA)
 #########################################
 
-data_frame.to_csv(f"{s3_write_path}/ouput2.csv")
+data_frame.to_csv(f"{s3_write_path}/{time_stamp} out.csv")
 
 job.commit()
