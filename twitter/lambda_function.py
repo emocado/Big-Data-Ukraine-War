@@ -18,7 +18,7 @@ def lambda_handler(event, context):
         start_date = datetime.utcnow()
         end_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         tweets = []
-        for i, tweet in enumerate(sntwitter.TwitterSearchScraper(f"{query} since:{start_date.date()} until:{end_date.date()}").get_items()):
+        for _, tweet in enumerate(sntwitter.TwitterSearchScraper(f"{query} since:{start_date.date()} until:{end_date.date()}").get_items()):
             if tweet.date.time() < (start_date - timedelta(minutes=15)).time():
                 break
             tweets.append({

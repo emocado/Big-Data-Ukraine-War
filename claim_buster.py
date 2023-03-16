@@ -1,8 +1,11 @@
 import requests
+from dotenv import load_dotenv
 import os
 
+load_dotenv()
+
 api_key = os.environ.get("CLAIM_BUSTER_API_KEY") 
-input_claim = "The sky is blue."
+input_claim = "Russia is losing the Ukraine war"
 
 # Define the endpoint (url) with the claim formatted as part of it, api-key (api-key is sent as an extra header)
 api_endpoint = f"https://idir.uta.edu/claimbuster/api/v2/score/text/{input_claim}"
