@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 query = "ukraine war"
 # Set the start and end dates for the search (in UTC timezone)
 start_date = datetime.utcnow()
+time_stamp = start_date.replace(second=0, microsecond=0)
 end_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
 tweets = []
 for i, tweet in enumerate(sntwitter.TwitterSearchScraper(f"{query} since:{start_date.date()} until:{end_date.date()}").get_items()):
@@ -20,6 +21,7 @@ for i, tweet in enumerate(sntwitter.TwitterSearchScraper(f"{query} since:{start_
         "retweetCount": tweet.retweetCount,
         "replyCount": tweet.replyCount,
         "inReplyToUser": tweet.inReplyToUser.username if tweet.inReplyToUser else None,
+        "timeStamp": str(time_stamp)
         })
     
 with open (f"twitter/twitter_dump.json", "w") as f:
