@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timedelta
 import praw
-
+import ftfy
 query = 'ukraine war'
 
 reddit = praw.Reddit(
@@ -14,47 +14,48 @@ reddit = praw.Reddit(
 
 posts = []
 comments = []
-start_date = datetime.utcnow()
-time_stamp = start_date.replace(second=0, microsecond=0)
+start_date = datetime.utcnow() - timedelta(days=3, minutes=15)
+time_stamp = datetime.utcnow().replace(second=0, microsecond=0)
+end_date = start_date + timedelta(minutes=15)
 
-for post in reddit.subreddit("all").search(query=query , sort="new", time_filter="all", limit=100):
+for post in reddit.subreddit("all").search(query=query , sort="new", time_filter="week"):
     try:
-        if post.title != "[removed]" and post.title != "[deleted]" and post.title != "[deleted by user]":
-            # if datetime.fromtimestamp(post.created_utc) < (start_date - timedelta(minutes=15)):
-            #     continue
-            if "https" in post.selftext or post.selftext == "":
-                continue
-            posts.append({
-                'id':str(post.id),
-                'date': str(datetime.fromtimestamp(post.created_utc)),
-                'title':str(post.title),
-                'content':str(post.selftext),
-                'username':str(post.author),
-                'commentCount':int(post.num_comments),
-                'score':int(post.score),
-                'subreddit':str(post.subreddit)
-            })
-            if post.num_comments > 0:
-                submission = reddit.submission(id=post.id)
-                for top_level_comment in submission.comments:
-                    if str(top_level_comment.author) == "AutoModerator":
-                        continue
-                    comments.append({
-                        'id': str(top_level_comment.id),
-                        'date': str(datetime.fromtimestamp(top_level_comment.created_utc)),
-                        'content': str(top_level_comment.body),
-                        'username': str(top_level_comment.author.name),
-                        'score': int(top_level_comment.score),
-                        'post_id': str(post.id)
-                    })
-    except:
+        if datetime.fromtimestamp(post.created_utc) < start_date or datetime.fromtimestamp(post.created_utc) > end_date:
+            continue
+        posts.append({
+            'id':str(post.id),
+            'date': str(datetime.fromtimestamp(post.created_utc)),
+            'title':str(post.title),
+            'content':str(post.selftext),
+            'username':str(post.author),
+            'commentCount':int(post.num_comments),
+            'score':int(post.score),
+            'subreddit':str(post.subreddit)
+        })
+        if post.num_comments > 0:
+            submission = reddit.submission(id=post.id)
+            submission.comments.replace_more(limit=None)
+            for comment in submission.comments.list():
+                if str(comment.author) == "AutoModerator":
+                    continue
+                comments.append({
+                    'id': str(comment.id),
+                    'date': str(datetime.fromtimestamp(comment.created_utc)),
+                    'content': str(comment.body),
+                    'username': str(comment.author.name),
+                    'score': int(comment.score),
+                    'post_id': str(post.id),
+                    'parent_id': str(comment.parent_id),
+                })
+    except Exception as e:
         print("Error: " + str(post.id))
+        print(e)
         continue
             
 with open (f"reddit/reddit_posts_dump.json", "w") as f:
-    json.dump(posts, f)
+    json.dump(posts, f, ensure_ascii=False)
 with open (f"reddit/reddit_comments_dump.json", "w") as f:
-    json.dump(comments, f)
+    json.dump(comments, f, ensure_ascii=False)
 
 print(len(posts))
 print(len(comments))

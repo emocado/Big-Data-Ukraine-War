@@ -17,9 +17,9 @@ reddit = praw.Reddit(
 
 def lambda_handler(event, context):
     # Set the start and end dates for the search (in UTC timezone)
-    start_date = datetime.utcnow()
-    time_stamp = start_date.replace(second=0, microsecond=0)
-    end_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    start_date = datetime.utcnow() - timedelta(days=3, minutes=15)
+    time_stamp = datetime.utcnow().replace(second=0, microsecond=0)
+    end_date = start_date + timedelta(minutes=15)
     bucket="is459-ukraine-war-data"
     obj = s3.get_object(Bucket=bucket, Key='topics.txt')
     topics = obj['Body'].read().decode("utf-8").split("\n")
@@ -28,39 +28,36 @@ def lambda_handler(event, context):
         for query in topics:
             posts = []
             comments = []
-            posts_key=f"project/{query}/{time_stamp}/reddit_posts.json"
-            comments_key=f"project/{query}/{time_stamp}/reddit_comments.json"
-            for post in reddit.subreddit("all").search(query=query , sort="new", time_filter="day", limit=100):
-                try:
-                    if post.title != "[removed]" and post.title != "[deleted]" and post.title != "[deleted by user]":
-                        if "https" in post.selftext or post.selftext == "":
-                            continue
-                        posts.append({
-                            'id':str(post.id),
-                            'date': str(datetime.fromtimestamp(post.created_utc)),
-                            'title':str(post.title),
-                            'content':str(post.selftext),
-                            'username':str(post.author),
-                            'commentCount':int(post.num_comments),
-                            'score':int(post.score),
-                            'subreddit':str(post.subreddit)
-                        })
-                        if post.num_comments > 0:
-                            submission = reddit.submission(id=post.id)
-                            for top_level_comment in submission.comments:
-                                if str(top_level_comment.author) == "AutoModerator":
-                                    continue
-                                comments.append({
-                                    'id': str(top_level_comment.id),
-                                    'date': str(datetime.fromtimestamp(top_level_comment.created_utc)),
-                                    'content': str(top_level_comment.body),
-                                    'username': str(top_level_comment.author.name),
-                                    'score': int(top_level_comment.score),
-                                    'post_id': str(post.id)
-                                })
-                except:
-                    print("Error: " + str(post.id))
+            posts_key=f"project/{query}/reddit/{time_stamp}_posts.json"
+            comments_key=f"project/{query}/reddit/{time_stamp}_comments.json"
+            for post in reddit.subreddit("all").search(query=query , sort="new", time_filter="week"):
+                if datetime.fromtimestamp(post.created_utc) < start_date or datetime.fromtimestamp(post.created_utc) > end_date:
                     continue
+                posts.append({
+                    'id':str(post.id),
+                    'date': str(datetime.fromtimestamp(post.created_utc)),
+                    'title':str(post.title),
+                    'content':str(post.selftext),
+                    'username':str(post.author),
+                    'commentCount':int(post.num_comments),
+                    'score':int(post.score),
+                    'subreddit':str(post.subreddit)
+                })
+                if post.num_comments > 0:
+                    submission = reddit.submission(id=post.id)
+                    submission.comments.replace_more(limit=None)
+                    for comment in submission.comments.list():
+                        if str(comment.author) == "AutoModerator":
+                            continue
+                        comments.append({
+                            'id': str(comment.id),
+                            'date': str(datetime.fromtimestamp(comment.created_utc)),
+                            'content': str(comment.body),
+                            'username': str(comment.author.name),
+                            'score': int(comment.score),
+                            'post_id': str(post.id),
+                            'parent_id': str(comment.parent_id),
+                        })
                         
             posts_json = json.dumps(posts)
             comments_json = json.dump(comments)
