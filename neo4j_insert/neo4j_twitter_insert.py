@@ -109,4 +109,3 @@ if __name__ == "__main__":
     password = os.environ.get("NEO4J_PASSWORD")
     delete_database(uri, user, password)
     create_orchestrator(uri, user, password, tweets)
-
