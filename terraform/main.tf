@@ -13,10 +13,15 @@ data "archive_file" "twitter_zip" {
 
 data "archive_file" "reddit_zip" {
     type = "zip"
-    source_file = "../reddit/lambda_function.py"
-    output_path = "../reddit/lambda_function.zip"
+    source_file = "../reddit/lambda_function_initial.py"
+    output_path = "../reddit/lambda_function_initial.zip"
 }
 
+data "archive_file" "reddit_zip_aggregate" {
+    type = "zip"
+    source_file = "../reddit/lambda_function_aggregate.py"
+    output_path = "../reddit/lambda_function_aggregate.zip"
+}
 /*
 * Start of S3 bucket setup
 * Create bucket called is459-project
@@ -137,7 +142,7 @@ resource "aws_lambda_function" "twitter_scraper" {
 resource "aws_lambda_function" "reddit_scraper" {
     description = "Reddit scraper that scrapes tweets based on topics.txt"
     runtime = var.lambda_runtime
-    handler = "lambda_function.lambda_handler"
+    handler = "lambda_function_initial.lambda_handler"
     function_name = "reddit_scaper"
     filename = data.archive_file.reddit_zip.output_path
     source_code_hash = data.archive_file.reddit_zip.output_base64sha256
@@ -156,6 +161,27 @@ resource "aws_lambda_function" "reddit_scraper" {
     }
 }
 
+resource "aws_lambda_function" "reddit_scraper_aggregate" {
+    description = "Aggregates the scraped reddit jsons"
+    runtime = var.lambda_runtime
+    handler = "lambda_function_aggregate.lambda_handler"
+    function_name = "reddit_scaper_aggregate"
+    filename = data.archive_file.reddit_zip_aggregate.output_path
+    source_code_hash = data.archive_file.reddit_zip_aggregate.output_base64sha256
+    
+    role = aws_iam_role.scraper_role.arn
+    layers = [aws_lambda_layer_version.reddit_scraper_layer.arn]
+    timeout = 300
+    environment {
+      variables = {
+        REDDIT_CLIENT_ID = var.REDDIT_CLIENT_ID
+        REDDIT_CLIENT_SECRET = var.REDDIT_CLIENT_SECRET
+        REDDIT_PASSWORD = var.REDDIT_PASSWORD
+        REDDIT_USERNAME = var.REDDIT_USERNAME
+        REDDIT_USER_AGENT = var.REDDIT_USER_AGENT
+      }
+    }
+}
 
 /*
 * End of Lambda function definition for twitter scraper
@@ -170,6 +196,12 @@ resource "aws_cloudwatch_event_rule" "scraper_trigger_15_minutes" {
     description = "Triggers every 15 minutes"
 
     schedule_expression = "rate(15 minutes)" 
+}
+
+resource "aws_cloudwatch_event_rule" "scraper_trigger_daily_midnight" {
+    name = "scraper_trigger_daily_midnight"
+    description = "Triggers every midnight"
+    schedule_expression = "cron(0 0 * * ? *)" 
 }
 
 resource "aws_cloudwatch_event_target" "cloudwatch_lambda_target_twitter" {
@@ -200,6 +232,21 @@ resource "aws_lambda_permission" "cloudwatch_lambda_trigger_reddit" {
     function_name = aws_lambda_function.reddit_scraper.function_name
     principal =  "events.amazonaws.com"
     source_arn = aws_cloudwatch_event_rule.scraper_trigger_15_minutes.arn
+}
+
+resource "aws_cloudwatch_event_target" "cloudwatch_lambda_target_reddit_aggregate" {
+    rule = aws_cloudwatch_event_rule.scraper_trigger_daily_midnight.name
+    arn = aws_lambda_function.reddit_scraper_aggregate.arn
+    target_id = "reddit_scraper_aggregate"
+}
+
+
+resource "aws_lambda_permission" "cloudwatch_lambda_trigger_reddit_aggregate" {
+    statement_id = "AllowExecutionFromCloudWatch"
+    action = "lambda:InvokeFunction"
+    function_name = aws_lambda_function.reddit_scraper_aggregate.function_name
+    principal =  "events.amazonaws.com"
+    source_arn = aws_cloudwatch_event_rule.scraper_trigger_daily_midnight.arn
 }
 /*
 * End of Scraper Lambda Trigger definition 

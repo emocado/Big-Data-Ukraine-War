@@ -4,6 +4,7 @@ venv
 */python
 */layer.zip
 
+*/*.zip
 # Local .terraform directories
 **/.terraform/*
 
