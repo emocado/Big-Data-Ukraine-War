@@ -3,7 +3,7 @@ TWITTER_DIR = twitter
 REDDIT_DIR = reddit
 TERRAFORM_FOLDER = terraform
 
-.PHONY: build_twitter_layer build_reddit_layer  terraform_apply full_build
+.PHONY: build_twitter_layer build_reddit_layer terraform_apply full_build
 
 $(TWITTER_DIR)/layer:
 	$(MAKE) clean_twitter_layer
