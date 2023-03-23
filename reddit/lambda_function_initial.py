@@ -37,7 +37,7 @@ def lambda_handler(event, context):
         for query in topics:
             posts = []
             posts_key=f"project/{query}/reddit/{time_stamp}_posts.json"
-            for post in reddit.subreddit("all").search(query=query , sort="new", time_filter="day", limit=1000):
+            for post in reddit.subreddit("all").search(query=query , sort="new", time_filter="day", limit=100):
                 if datetime.fromtimestamp(post.created_utc) < start_date:
                     break
                 posts.append({
