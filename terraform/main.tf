@@ -95,7 +95,7 @@ resource "aws_lambda_layer_version" "twitter_scraper_layer" {
         "python3.8",
         "python3.9"
     ]
-    filename = "../twitter/twitter_scraper_layer.zip"
+    filename = "../twitter/layer.zip"
     description = "Layer that includes boto3 and snscrape"
 }
 
@@ -107,7 +107,7 @@ resource "aws_lambda_layer_version" "reddit_scraper_layer" {
         "python3.8",
         "python3.9"
     ]
-    filename = "../reddit/reddit_scraper_layer.zip"
+    filename = "../reddit/layer.zip"
     description = "Layer that includes boto3 and praw"
 }
 

@@ -5,27 +5,27 @@ TERRAFORM_FOLDER = terraform
 
 .PHONY: build_twitter_layer build_reddit_layer 
 
-$(TWITTER_DIR)/$(VENV_NAME)/bin/activate:
-	$(MAKE) clean_twitter_venv
-	cd $(TWITTER_DIR) && python3 -m venv $(VENV_NAME)
+$(TWITTER_DIR)/layer:
+	$(MAKE) clean_twitter_layer
+	cd $(TWITTER_DIR) && mkdir python
 
-$(REDDIT_DIR)/$(VENV_NAME)/bin/activate:
-	$(MAKE) clean_reddit_venv
-	cd $(REDDIT_DIR) && python3 -m venv $(VENV_NAME)
+$(REDDIT_DIR)/layer:
+	$(MAKE) clean_twitter_layer
+	cd $(REDDIT_DIR) && mkdir python
 
-build_twitter_layer: $(TWITTER_DIR)/$(VENV_NAME)/bin/activate
-	. $(TWITTER_DIR)/venv/bin/activate
-	pip install -r $(TWITTER_DIR)/requirements.txt
-	cd $(TWITTER_DIR)/$(VENV_NAME)/lib*/python*/site-packages && zip -r ../../../../$(TWITTER_DIR)_scraper_layer.zip .
+terraform_apply:
+	cd terraform && terraform apply
+
+build_twitter_layer: $(TWITTER_DIR)/layer
+	cd $(TWITTER_DIR) && pip install -r requirements.txt -t python/
+	cd $(TWITTER_DIR)&& zip -r layer.zip python
+
+build_reddit_layer: $(REDDIT_DIR)/layer
+	cd $(REDDIT_DIR) && pip install -r requirements.txt -t python/
+	cd $(REDDIT_DIR)&& zip -r layer.zip python
 	
-build_reddit_layer: $(REDDIT_DIR)/$(VENV_NAME)/bin/activate
-	. $(REDDIT_DIR)/venv/bin/activate
-	pip install -r $(REDDIT_DIR)/requirements.txt
-	cd $(REDDIT_DIR)/$(VENV_NAME)/lib*/python*/site-packages && zip -r ../../../../$(REDDIT_DIR)_scraper_layer.zip .
+clean_twitter_layer:
+	rm -rf $(TWITTER_DIR)/python
 
-clean_twitter_venv:
-	rm -rf $(TWITTER_DIR)/$(VENV_NAME)
-
-clean_reddit_venv:
-	rm -rf $(REDDIT_DIR)/$(VENV_NAME)
-
+clean_reddit_layer:
+	rm -rf $(REDDIT_DIR)/pytho

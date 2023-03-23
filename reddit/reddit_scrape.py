@@ -1,7 +1,6 @@
 import json
 from datetime import datetime, timedelta
 import praw
-import ftfy
 query = 'ukraine war'
 
 reddit = praw.Reddit(

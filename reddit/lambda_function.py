@@ -70,7 +70,7 @@ def lambda_handler(event, context):
                         })
                         
             posts_json = json.dumps(posts)
-            comments_json = json.dump(comments)
+            comments_json = json.dumps(comments)
             response1 = s3.put_object(Body=posts_json, Bucket=bucket, Key=posts_key)
             response2 = s3.put_object(Body=comments_json, Bucket=bucket, Key=comments_key)
         return response1, response2
