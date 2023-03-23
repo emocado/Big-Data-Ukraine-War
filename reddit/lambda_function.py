@@ -1,18 +1,28 @@
 import json
 import boto3
+import os
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 import praw
+
+load_dotenv()
+
+client_id = os.environ.get("REDDIT_CLIENT_ID")
+client_secret = os.environ.get("REDDIT_CLIENT_SECRET")
+password = os.environ.get("REDDIT_PASSWORD")
+username = os.environ.get("REDDIT_USERNAME")
+user_agent = os.environ.get("REDDIT_USER_AGENT")
 
 print('Loading function')
 
 s3 = boto3.client('s3')
 
 reddit = praw.Reddit(
-    client_id="m9BYSa5sn4PPK6cz91s4ZA",
-    client_secret="IexB6l0s3CdUYjWj4PCl-GSCbtdI_A",
-    password="P@ssword123",
-    username="apple-tree3",
-    user_agent="IS459-BigData/1.0.0"
+    client_id=client_id,
+    client_secret=client_secret,
+    password=password,
+    username=username,
+    user_agent=user_agent
 )
 
 def lambda_handler(event, context):
