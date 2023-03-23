@@ -27,8 +27,12 @@ reddit = praw.Reddit(
 
 def lambda_handler(event, context):
     # Set the start and end dates for the search (in UTC timezone)
+    posts = []
+    comments = []
+
     post_date = datetime.utcnow() - timedelta(days=3)
     time_stamp = datetime.utcnow().replace(second=0, microsecond=0)
+
     bucket="is459-ukraine-war-data"
     obj = s3.get_object(Bucket=bucket, Key='topics.txt')
     topics = obj['Body'].read().decode("utf-8").split("\n")
@@ -42,8 +46,6 @@ def lambda_handler(event, context):
         posts.extend(file_content)
 
     try:
-        posts = []
-        comments = []
         posts_key=f"project/{query}/reddit/{time_stamp}_posts_aggregated.json"
         comments_key=f"project/{query}/reddit/{time_stamp}_comments.json"
         for post in posts:
