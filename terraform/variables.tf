@@ -5,7 +5,7 @@ variable "lambda_runtime" {
 
 variable "data_bucket" {
     type = string
-    default = "is459-ukraine-war-data"
+    default = "tf-is459-ukraine-war-data"
 }
 
 variable "REDDIT_CLIENT_ID" {}

@@ -3,7 +3,7 @@ TWITTER_DIR = twitter
 REDDIT_DIR = reddit
 TERRAFORM_FOLDER = terraform
 
-.PHONY: build_twitter_layer build_reddit_layer terraform_apply full_build
+.PHONY: build_twitter_layer build_reddit_layer terraform_init terraform_plan terraform_apply terraform_destroy full_build 
 
 $(TWITTER_DIR)/layer:
 	$(MAKE) clean_twitter_layer
@@ -18,8 +18,17 @@ full_build:
 	$(MAKE) build_reddit_layer
 	$(MAKE) terraform_apply
 
+terraform_init:
+	cd terraform && terraform init
+
+terraform_plan:
+	cd terraform && terraform plan
+
 terraform_apply:
 	cd terraform && terraform apply
+
+terraform_destroy:
+	cd terraform && terraform destroy
 
 build_twitter_layer: $(TWITTER_DIR)/layer
 	cd $(TWITTER_DIR) && pip install -r requirements.txt -t python/

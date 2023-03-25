@@ -30,14 +30,17 @@ def lambda_handler(event, context):
     posts = []
     comments = []
     # post_date = datetime.utcnow()
-    post_date = datetime.utcnow() - timedelta(days=1)
+    
     time_stamp = datetime.utcnow().replace(second=0, microsecond=0)
-
-    bucket="is459-ukraine-war-data"
+    crawl_day = (datetime.utcnow() - timedelta(days=1)).strftime("%d-%m-%Y") # dd-mm-yyyy
+    recrawl_day = time_stamp.strftime("%d-%m-%Y")
+    
+    bucket="tf-is459-ukraine-war-data"
     obj = s3.get_object(Bucket=bucket, Key='topics.txt')
     topics = obj['Body'].read().decode("utf-8").split("\n")
     for query in topics:
-        bucket_search_content = s3.list_objects_v2(Bucket=bucket, Prefix=f"project/{query}/reddit/{str(post_date)[:10]}").get('Contents', [])
+        
+        bucket_search_content = s3.list_objects_v2(Bucket=bucket, Prefix=f"reddit_initial/topic={query}/dataload={crawl_day}/").get('Contents', [])
         file_keys = [file['Key'] for file in bucket_search_content]
 
         for key in file_keys:
@@ -46,8 +49,8 @@ def lambda_handler(event, context):
             posts.extend(file_content)
     
         try:
-            posts_key=f"project/{query}/reddit/{time_stamp}_posts_aggregated.json"
-            comments_key=f"project/{query}/reddit/{time_stamp}_comments.json"
+            posts_key=f"project/source=reddit_posts/topic={query}/dataload={recrawl_day}/{time_stamp}_posts_aggregated.json"
+            comments_key=f"project/source_reddit_comments/topic={query}/dataload={recrawl_day}/{time_stamp}_comments.json"
             for post in posts:
                 updated_post = reddit.submission(id=post['id'])
                 post['commentCount'] = int(updated_post.num_comments)

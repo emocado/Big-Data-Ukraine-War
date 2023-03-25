@@ -14,7 +14,8 @@ def lambda_handler(event, context):
     start_date = datetime.utcnow()
     time_stamp = start_date.replace(second=0, microsecond=0)
     end_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-    bucket="is459-ukraine-war-data"
+    crawl_day = datetime.utcnow().strftime("%d-%m-%Y") # dd-mm-yyyy
+    bucket="tf-is459-ukraine-war-data"
     source="twitter"
     obj = s3.get_object(Bucket=bucket, Key='topics.txt')
     topics = obj['Body'].read().decode("utf-8").split("\n")
@@ -22,7 +23,7 @@ def lambda_handler(event, context):
     try:
         for query in topics:
             tweets = []
-            key=f"project/{query}/{source}/{time_stamp}.json"
+            key=f"project/source={source}/topic={query}/dataload={crawl_day}/{time_stamp}.json"
             for _, tweet in enumerate(sntwitter.TwitterSearchScraper(f"{query} since:{start_date.date()} until:{end_date.date()}").get_items()):
                 if tweet.date.time() < (start_date - timedelta(minutes=15)).time():
                     break

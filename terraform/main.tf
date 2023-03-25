@@ -28,6 +28,12 @@ data "archive_file" "reddit_zip_aggregate" {
 * Add topics.txt into bucket, used to define topics to scrape
 */
 resource "aws_s3_bucket" "is459-project" {
+    bucket = "is459-ukraine-war-data"
+}
+
+
+// New test bucket
+resource "aws_s3_bucket" "tf-is459-project" {
     bucket = var.data_bucket
 }
 

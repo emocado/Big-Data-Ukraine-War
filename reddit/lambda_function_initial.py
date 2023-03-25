@@ -29,14 +29,15 @@ def lambda_handler(event, context):
     # Set the start and end dates for the search (in UTC timezone)
     time_stamp = datetime.utcnow().replace(second=0, microsecond=0)
     start_date = datetime.utcnow() - timedelta(minutes=15)
-    bucket="is459-ukraine-war-data"
+    bucket="tf-is459-ukraine-war-data"
+    crawl_day = datetime.utcnow().strftime("%d-%m-%Y") # dd-mm-yyyy
     obj = s3.get_object(Bucket=bucket, Key='topics.txt')
     topics = obj['Body'].read().decode("utf-8").split("\n")
 
     try:
         for query in topics:
             posts = []
-            posts_key=f"project/{query}/reddit/{time_stamp}_posts.json"
+            posts_key=f"reddit_initial/topic={query}/dataload={crawl_day}/{time_stamp}.json"
             for post in reddit.subreddit("all").search(query=query , sort="new", time_filter="day", limit=100):
                 if datetime.fromtimestamp(post.created_utc) < start_date:
                     break
