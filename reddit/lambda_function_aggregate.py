@@ -27,19 +27,18 @@ reddit = praw.Reddit(
 
 def lambda_handler(event, context):
     # Set the start and end dates for the search (in UTC timezone)
-    posts = []
-    comments = []
+
     # post_date = datetime.utcnow()
-    
     time_stamp = datetime.utcnow().replace(second=0, microsecond=0)
     crawl_day = (datetime.utcnow() - timedelta(days=1)).strftime("%d-%m-%Y") # dd-mm-yyyy
     recrawl_day = time_stamp.strftime("%d-%m-%Y")
-    
     bucket="tf-is459-ukraine-war-data"
     obj = s3.get_object(Bucket=bucket, Key='topics.txt')
     topics = obj['Body'].read().decode("utf-8").split("\n")
+    
     for query in topics:
-        
+        posts = []
+        comments = []        
         bucket_search_content = s3.list_objects_v2(Bucket=bucket, Prefix=f"reddit_initial/topic={query}/dataload={crawl_day}/").get('Contents', [])
         file_keys = [file['Key'] for file in bucket_search_content]
 
@@ -77,6 +76,7 @@ def lambda_handler(event, context):
             comments_json = json.dumps(comments)
             response1 = s3.put_object(Body=posts_json, Bucket=bucket, Key=posts_key)
             response2 = s3.put_object(Body=comments_json, Bucket=bucket, Key=comments_key)
-            return response1, response2 
         except Exception as e:
             print(e)
+            
+    return response1, response2 
