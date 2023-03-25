@@ -38,10 +38,9 @@ def lambda_handler(event, context):
     
     for query in topics:
         posts = []
-        comments = []        
+        comments = []
         bucket_search_content = s3.list_objects_v2(Bucket=bucket, Prefix=f"reddit_initial/topic={query}/dataload={crawl_day}/").get('Contents', [])
         file_keys = [file['Key'] for file in bucket_search_content]
-
         for key in file_keys:
             post_file = s3.get_object(Bucket=bucket, Key=key)
             file_content = json.loads((post_file['Body'].read().decode("utf-8")))
@@ -71,12 +70,11 @@ def lambda_handler(event, context):
                             'post_id': str(updated_post.id),
                             'parent_id': str(comment.parent_id),
                         })
-    
-            posts_json = json.dumps(posts)
-            comments_json = json.dumps(comments)
-            response1 = s3.put_object(Body=posts_json, Bucket=bucket, Key=posts_key)
-            response2 = s3.put_object(Body=comments_json, Bucket=bucket, Key=comments_key)
         except Exception as e:
             print(e)
             
+        posts_json = json.dumps(posts)
+        comments_json = json.dumps(comments)
+        response1 = s3.put_object(Body=posts_json, Bucket=bucket, Key=posts_key)
+        response2 = s3.put_object(Body=comments_json, Bucket=bucket, Key=comments_key)        
     return response1, response2 
