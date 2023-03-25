@@ -23,7 +23,7 @@ def lambda_handler(event, context):
     try:
         for query in topics:
             tweets = []
-            key=f"project/source={source}/topic={query}/dataload={crawl_day}/{time_stamp}.json"
+            key=f"project/{source}/topic={query}/dataload={crawl_day}/{time_stamp}.json"
             for _, tweet in enumerate(sntwitter.TwitterSearchScraper(f"{query} since:{start_date.date()} until:{end_date.date()}").get_items()):
                 if tweet.date.time() < (start_date - timedelta(minutes=15)).time():
                     break

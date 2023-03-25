@@ -47,8 +47,8 @@ def lambda_handler(event, context):
             posts.extend(file_content)
     
         try:
-            posts_key=f"project/source=reddit_posts/topic={query}/dataload={recrawl_day}/{time_stamp}_posts_aggregated.json"
-            comments_key=f"project/source=reddit_comments/topic={query}/dataload={recrawl_day}/{time_stamp}_comments.json"
+            posts_key=f"project/reddit_posts/topic={query}/dataload={recrawl_day}/{time_stamp}_posts_aggregated.json"
+            comments_key=f"project/reddit_comments/topic={query}/dataload={recrawl_day}/{time_stamp}_comments.json"
             for post in posts:
                 updated_post = reddit.submission(id=post['id'])
                 post['commentCount'] = int(updated_post.num_comments)

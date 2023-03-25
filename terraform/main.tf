@@ -177,7 +177,7 @@ resource "aws_lambda_function" "reddit_scraper_aggregate" {
 
   role    = aws_iam_role.scraper_role.arn
   layers  = [aws_lambda_layer_version.reddit_scraper_layer.arn]
-  timeout = 300
+  timeout = 600
   environment {
     variables = {
       REDDIT_CLIENT_ID     = var.REDDIT_CLIENT_ID
@@ -279,7 +279,16 @@ resource "aws_iam_role" "glue_role" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "glue_role_lambda_basic_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" # Attach the basic Lambda execution role
+  role       = aws_iam_role.glue_role.name
+}
 
+
+resource "aws_iam_role_policy_attachment" "glue_role_s3_full_access_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess" # Attach the Amazon S3 full access policy
+  role       = aws_iam_role.glue_role.name
+}
 resource "aws_iam_role_policy_attachment" "glue_role_glue_service_policy_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole" # Attach the AWS Glue service role policy
   role       = aws_iam_role.glue_role.name
