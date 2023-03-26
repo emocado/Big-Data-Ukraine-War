@@ -41,7 +41,7 @@ def fetch_data_catalog(source: str) -> List[Dict[str, str]]:
 def translate_tweet(filename: str):
     s3 = boto3.client('s3')
     bucket = DATA_LOCATION["bucket"]
-    file_path = DATA_LOCATION["bucket"]["twitter"]["file_path"]
+    file_path = DATA_LOCATION["twitter"]["file_path"]
 
     data_columns = fetch_data_catalog("twitter")
     content_obj = {}
@@ -70,10 +70,10 @@ def translate_reddit(filename: str, source: str):
     s3 = boto3.client('s3')
     bucket = DATA_LOCATION["bucket"]
     if source == "posts":
-        file_path = DATA_LOCATION["bucket"]["reddit_posts"]["file_path"]
+        file_path = DATA_LOCATION["reddit_posts"]["file_path"]
         data_columns = fetch_data_catalog("reddit_posts")
     elif source == "comments":
-        file_path = DATA_LOCATION["bucket"]["reddit_comments"]["file_path"]
+        file_path = DATA_LOCATION["reddit_comments"]["file_path"]
         data_columns = fetch_data_catalog("reddit_comments")
 
     content_obj = {}
