@@ -17,13 +17,13 @@ data "archive_file" "reddit_zip" {
   output_path = "../reddit/lambda_function_initial.zip"
 }
 
-data "archive_file" "reddit_zip_aggregate" {
+data "archive_file" "reddit_aggregate_zip" {
   type        = "zip"
   source_file = "../reddit/lambda_function_aggregate.py"
   output_path = "../reddit/lambda_function_aggregate.zip"
 }
 
-data "archive_file" "twitter_glue_trigger" {
+data "archive_file" "twitter_glue_trigger_zip" {
   type        = "zip"
   source_file = "../glue/twitter_glue_trigger.py"
   output_path = "../glue/twitter_glue_trigger.zip"
@@ -185,8 +185,8 @@ resource "aws_lambda_function" "reddit_scraper_aggregate" {
   runtime          = var.lambda_runtime
   handler          = "lambda_function_aggregate.lambda_handler"
   function_name    = "reddit_scaper_aggregate"
-  filename         = data.archive_file.reddit_zip_aggregate.output_path
-  source_code_hash = data.archive_file.reddit_zip_aggregate.output_base64sha256
+  filename         = data.archive_file.reddit_aggregate_zip.output_path
+  source_code_hash = data.archive_file.reddit_aggregate_zip.output_base64sha256
 
   role    = aws_iam_role.scraper_role.arn
   layers  = [aws_lambda_layer_version.reddit_scraper_layer.arn]
@@ -200,6 +200,17 @@ resource "aws_lambda_function" "reddit_scraper_aggregate" {
       REDDIT_USER_AGENT    = var.REDDIT_USER_AGENT
     }
   }
+}
+
+resource "aws_lambda_function" "twitter_glue_trigger_lambda" {
+  description      = "Triggers the run of twitter glue"
+  runtime          = var.lambda_runtime
+  handler          = "lambda_function_aggregate.lambda_handler"
+  function_name    = "twitter_glue_trigger"
+  filename         = data.archive_file.twitter_glue_trigger_zip.output_path
+  source_code_hash = data.archive_file.twitter_glue_trigger_zip.output_base64sha256
+  role    = aws_iam_role.scraper_role.arn
+  timeout = 60
 }
 
 /*
