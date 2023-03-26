@@ -22,6 +22,12 @@ data "archive_file" "reddit_zip_aggregate" {
   source_file = "../reddit/lambda_function_aggregate.py"
   output_path = "../reddit/lambda_function_aggregate.zip"
 }
+
+data "archive_file" "twitter_glue_trigger" {
+  type        = "zip"
+  source_file = "../glue/twitter_glue_trigger.py"
+  output_path = "../glue/twitter_glue_trigger.zip"
+}
 /*
 * Start of S3 bucket setup
 * Create bucket called is459-project
@@ -37,15 +43,22 @@ resource "aws_s3_bucket" "tf-is459-project" {
   bucket = var.data_bucket
 }
 
-resource "local_file" "topic_file" {
-  content  = file("topics.txt")
-  filename = "topics.txt"
+// New test bucket
+resource "aws_s3_bucket" "tf-glue-assets" {
+  bucket = var.glue_assets_bucket
+}
+
+
+resource "aws_s3_object" "twitter_glue_script" {
+  bucket = aws_s3_bucket.tf-glue-assets.id
+  key = "scripts/twitter_glue.py"
+  source = "../glue/twitter_glue.py"
 }
 
 resource "aws_s3_object" "topic_object" {
-  bucket = var.data_bucket
+  bucket = aws_s3_bucket.tf-is459-project.id
   key    = "topics.txt"
-  source = local_file.topic_file.filename
+  source = "topics.txt"
 }
 
 /*

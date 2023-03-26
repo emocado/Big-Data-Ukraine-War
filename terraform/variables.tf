@@ -8,6 +8,11 @@ variable "data_bucket" {
     default = "tf-is459-ukraine-war-data"
 }
 
+variable "glue_assets_bucket" {
+    type = string
+    default = "tf-glue-assets"
+}
+
 variable "REDDIT_CLIENT_ID" {}
 variable "REDDIT_CLIENT_SECRET" {}
 variable "REDDIT_PASSWORD" {}
