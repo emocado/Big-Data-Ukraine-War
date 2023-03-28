@@ -5,6 +5,7 @@
 # Import Python modules
 import sys
 from datetime import datetime
+import requests
 
 # Import pyspark modules
 from pyspark.context import SparkContext
@@ -20,6 +21,13 @@ from awsglue.job import Job
 # Import boto3 modules
 import boto3
 
+# Import neo4j modules
+from neo4j import GraphDatabase
+from neo4j.exceptions import ServiceUnavailable
+
+# Import translate modules
+from deep_translator import GoogleTranslator
+translator = GoogleTranslator(source='auto', target='english')
 
 ## @params: [JOB_NAME]
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
@@ -32,40 +40,65 @@ job = Job(glue_context)
 job.init(args['JOB_NAME'], args)
 
 # Parameters
-glue_db = "twitter-crawler-database"
-glue_tbl = "project" # data catalog table
-folder = "project"
-bucket = "wklee-is459"
-output_folder = "project_write"
-s3_write_path = f"s3://{bucket}/{output_folder}"
+glue_db = "project-database"
+glue_tbl = "twitter" # data catalog table
+crawl_day = datetime.utcnow().strftime("%d-%m-%Y") # dd-mm-yyyy
+folder = f"project/twitter/topic=ukraine war/dataload={crawl_day}/"
+bucket = "tf-is459-ukraine-war-data"
+uri = "neo4j+s://a4b525cc.databases.neo4j.io"
+user = "neo4j"
+password = "i9YaQe2DnNifBq7CUxnGIyt3QRv7EuavjDfUgLxa8Wc"
+api_key_claimbuster = "f5f59d0ec732451bb7cedf7b7d7d9c01"
+api_endpoint_claimbuster = "https://idir.uta.edu/claimbuster/api/v2/score/text/"
 
-#########################################
-### EXTRACT (READ DATA)
-#########################################
-dynamic_frame_read = glue_context.create_dynamic_frame.from_catalog(
-    database = glue_db,
-    table_name = glue_tbl
-)
+s3 = boto3.client('s3')
+obj = s3.get_object(Bucket=bucket, Key='topics.txt')
+topics = obj['Body'].read().decode("utf-8").split("\n")
 
-# Convert dynamic frame to data frame to use standard pyspark functions
-data_frame = dynamic_frame_read.toDF().toPandas()
-
-# Get latest file name which is also the timestamp 
-s3 = boto3.resource('s3')
-bucket = s3.Bucket(bucket)
-objects = list(bucket.objects.filter(Prefix=folder))
-objects.sort(key=lambda x: x.last_modified)
-latest_file = objects[-1].key
-time_stamp = latest_file.lstrip(f"{folder}/").rstrip(".json")
-
-# Extract out tweets of that timestamp
-data_frame = data_frame[data_frame['timeStamp'] == time_stamp]
+# Get latest file name which is also the timestamp
+files = s3.list_objects_v2(Bucket=bucket, Prefix=folder)
+latest_file = max(files['Contents'], key=lambda x: x['LastModified'])
+time_stamp = latest_file['Key'].replace(folder, "").rstrip(".json")
 
 
 #########################################
-### TRANSFORM (MODIFY DATA)
+### NEO4j Functions
 #########################################
+def insert_neo4j_with_cypher(tx, tweet, topic):
+    query = (
+        "MERGE (t:Tweet {id: $id}) "
+        "SET "
+        "t.date = $tweetDate,"
+        "t.timeStamp = datetime(REPLACE($timeStamp, ' ', 'T')),"
+        "t.inReplyToUser = $inReplyToUser,"
+        "t.replyCount = toInteger($replyCount),"
+        "t.followersCount = toInteger($followersCount),"
+        "t.content = $content,"
+        "t.retweetCount = toInteger($retweetCount),"
+        "t.username = $username,"
+        "t.positive = toFloat($positive),"
+        "t.negative = toFloat($negative),"
+        "t.neutral = toFloat($neutral),"
+        "t.mixed = toFloat($mixed),"
+        "t.topic = $topic,"
+        "t.claimScore = toFloat($claimScore) "
+        "FOREACH (mentionedUser IN CASE WHEN $mentionedUsers IS NULL THEN [] ELSE SPLIT($mentionedUsers, ',') END | "
+        "MERGE (u:User {username: mentionedUser}) "
+        "MERGE (t)-[:MENTIONS]->(u))"
+    )
+    tx.run(query, id=tweet["id"], tweetDate=tweet["date"], timeStamp=tweet["timeStamp"], inReplyToUser=tweet["inReplyToUser"], replyCount=tweet["replyCount"], followersCount=tweet["followersCount"], content=tweet["content"], retweetCount=tweet["retweetCount"], username=tweet["username"], positive=tweet["Positive"], negative=tweet["Negative"], neutral=tweet["Neutral"], mixed=tweet["Mixed"], mentionedUsers=tweet["mentionedUsers"], claimScore=tweet["claimScore"], topic=topic)
 
+def create_orchestrator(uri, user, password, tweets, topic):
+    data_base_connection = GraphDatabase.driver(uri = uri, auth=(user, password))
+    with data_base_connection.session(database="neo4j") as session:
+        # Write transactions allow the driver to handle retries and transient errors
+        for tweet in tweets:
+            session.execute_write(insert_neo4j_with_cypher, tweet, topic)
+
+
+#########################################
+### AWS Comprehend Function to get sentiment score
+#########################################
 def get_sentiment(text_list):
     # Initialize an empty list for storing sentiment results
     sentiments = []
@@ -90,15 +123,54 @@ def get_sentiment(text_list):
     # Return the sentiments list sorted by index 
     return sorted(sentiments, key=lambda x:x["index"])
 
-# Apply the UDF to your dataframe column and store the results in a new column
-sentiments = get_sentiment(data_frame.content.to_list())
-for key in sentiments[0].keys():
-    data_frame[key] = [x[key] for x in sentiments]
 
 #########################################
-### LOAD (WRITE DATA)
+### Claimbuster Function to call api
 #########################################
+def invoke_claimbuster_api(input_claim):
+    api_response = requests.get(url=api_endpoint_claimbuster+input_claim, headers={"x-api-key": api_key_claimbuster})
+    data = api_response.json()
+    if data["results"]:
+        return data["results"][0]["score"]
+    return 0
 
-data_frame.to_csv(f"{s3_write_path}/{time_stamp} out.csv")
+
+for query in topics:
+    #########################################
+    ### EXTRACT (READ DATA)
+    #########################################
+    dynamic_frame_read = glue_context.create_dynamic_frame.from_catalog(
+        database = glue_db,
+        table_name = glue_tbl,
+        push_down_predicate =f"(topic=='{query}' and dataload=='{crawl_day}')"
+    )
+    
+    # Convert dynamic frame to data frame to use standard pyspark functions
+    data_frame = dynamic_frame_read.toDF().toPandas()
+    
+    # Extract out tweets of that timestamp
+    data_frame = data_frame[data_frame['timeStamp'] == time_stamp]
+    
+    
+    #########################################
+    ### TRANSFORM (MODIFY DATA)
+    #########################################
+    # Apply AWS Comprehend and add sentiment score as a new column in the dataframe
+    sentiments = get_sentiment(data_frame.content.to_list())
+    for key in sentiments[0].keys():
+        data_frame[key] = [x[key] for x in sentiments]
+    
+    # Apply translate and replace the content in place
+    data_frame["content"] = data_frame.content.apply(translator.translate)
+    
+    # Call claimbuster to get claim score and add it as a new column in the dataframe
+    data_frame["claimScore"] = data_frame.content.apply(invoke_claimbuster_api)
+    
+    
+    #########################################
+    ### LOAD (WRITE DATA)
+    #########################################
+    # Insert into neo4j
+    create_orchestrator(uri, user, password, data_frame.to_dict('records'), query)
 
 job.commit()
