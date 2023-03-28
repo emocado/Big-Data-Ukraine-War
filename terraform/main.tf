@@ -329,6 +329,7 @@ resource "aws_glue_classifier" "json_array_classifier" {
 }
 resource "aws_glue_crawler" "project_crawler" {
   name          = "project-crawler"
+  schedule = cron(0 0 * * ? *)
   role = aws_iam_role.glue_role.arn
   database_name = aws_glue_catalog_database.project_catalog_database.name
   s3_target {
