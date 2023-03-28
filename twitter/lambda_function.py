@@ -7,7 +7,8 @@ from datetime import datetime, timedelta
 print('Loading function')
 
 s3 = boto3.client('s3')
-
+glue = boto3.client('glue')
+gluejobname = "twitter-comprehend-glue-job-v2"
 
 def lambda_handler(event, context):
     # Set the start and end dates for the search (in UTC timezone)
@@ -41,6 +42,7 @@ def lambda_handler(event, context):
                 })
             tweet_json = json.dumps(tweets)
             response = s3.put_object(Body=tweet_json, Bucket=bucket, Key=key)
+            glue.start_job_run(JobName=gluejobname)
         return response
     except Exception as e:
         print(e)
