@@ -83,7 +83,7 @@ def insert_neo4j_with_cypher(tx, tweet, topic):
         "t.topic = $topic,"
         "t.claimScore = toFloat($claimScore) "
         "FOREACH (mentionedUser IN CASE WHEN $mentionedUsers IS NULL THEN [] ELSE SPLIT($mentionedUsers, ',') END | "
-        "MERGE (u:User {username: mentionedUser}) "
+        "MERGE (u:User_Twitter {username: mentionedUser}) "
         "MERGE (t)-[:MENTIONS]->(u))"
     )
     tx.run(query, id=tweet["id"], tweetDate=tweet["date"], timeStamp=tweet["timeStamp"], inReplyToUser=tweet["inReplyToUser"], replyCount=tweet["replyCount"], followersCount=tweet["followersCount"], content=tweet["content"], retweetCount=tweet["retweetCount"], username=tweet["username"], positive=tweet["Positive"], negative=tweet["Negative"], neutral=tweet["Neutral"], mixed=tweet["Mixed"], mentionedUsers=tweet["mentionedUsers"], claimScore=tweet["claimScore"], topic=topic)
@@ -155,13 +155,13 @@ for query in topics:
     #########################################
     ### TRANSFORM (MODIFY DATA)
     #########################################
+    # Apply translate and replace the content in place
+    data_frame["content"] = data_frame.content.apply(translator.translate)
+
     # Apply AWS Comprehend and add sentiment score as a new column in the dataframe
     sentiments = get_sentiment(data_frame.content.to_list())
     for key in sentiments[0].keys():
         data_frame[key] = [x[key] for x in sentiments]
-    
-    # Apply translate and replace the content in place
-    data_frame["content"] = data_frame.content.apply(translator.translate)
     
     # Call claimbuster to get claim score and add it as a new column in the dataframe
     data_frame["claimScore"] = data_frame.content.apply(invoke_claimbuster_api)
