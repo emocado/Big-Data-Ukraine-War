@@ -4,7 +4,7 @@
 
 # Import Python modules
 import sys
-import logging
+import requests
 from datetime import datetime
 import numpy as np
 
@@ -26,6 +26,10 @@ import boto3
 from neo4j import GraphDatabase
 from neo4j.exceptions import ServiceUnavailable
 
+# Import translate modules
+from deep_translator import GoogleTranslator
+translator = GoogleTranslator(source='auto', target='english')
+
 ## @params: [JOB_NAME]
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -42,9 +46,11 @@ glue_post_tbl = "reddit_posts"
 glue_comment_tbl = "reddit_comments"
 bucket = "tf-is459-ukraine-war-data"
 s3_write_path = f"s3://{bucket}"
-uri = "neo4j+s://a8ea8b44.databases.neo4j.io"
+uri = "neo4j+s://d8109db2.databases.neo4j.io"
 user = "neo4j"
-password = "Kj_2iiLjGJuRVgW3vaQ3L8clptsLfhbSyFHTpIPxR3M"
+password = "xfAEG2S-6F_6XHJr3pcpUUm5PRjpa7YtsV-Ol3dkuY0"
+api_key_claimbuster = "f5f59d0ec732451bb7cedf7b7d7d9c01"
+api_endpoint_claimbuster = "https://idir.uta.edu/claimbuster/api/v2/score/text/"
 
 
 s3 = boto3.client('s3')
@@ -52,15 +58,14 @@ obj = s3.get_object(Bucket=bucket, Key='topics.txt')
 topics = obj['Body'].read().decode("utf-8").split("\n")
 time_stamp = datetime.utcnow().strftime("%Y-%m-%d")
 
-
 #########################################
 ### NEO4j Functions
 #########################################
 def create_post_relationships(tx, id, date, title, content, username, commentCount, score, subreddit):
     query = (
-        "MERGE (p1:Post { id: $id, date: $date, title: $title, content: $content, username: $username, commentCount: $commentCount, score: $score, subreddit: $subreddit })"
-        "MERGE (r1:Subreddit { name: $subreddit })"
-        "MERGE (u1:User { username: $username })"
+        "MERGE (p1:Post_Reddit { id: $id, date: $date, title: $title, content: $content, username: $username, commentCount: $commentCount, score: $score, subreddit: $subreddit })"
+        "MERGE (r1:Subreddit_Reddit { name: $subreddit })"
+        "MERGE (u1:User_Reddit { username: $username })"
         "MERGE (p1)-[:POSTED_IN]->(r1)"
         "MERGE (p1)-[:POSTED_BY]->(u1)"
         "RETURN p1, r1, u1"
@@ -76,9 +81,9 @@ def create_post_relationships(tx, id, date, title, content, username, commentCou
 
 def create_comment_relationships(tx, id, date, content, username, score, post_id):
     query = (
-        "MERGE (p1:Post { id: $postId })"
-        "MERGE (u1:User { username: $username })"
-        "MERGE (c1:Comment { id: $id, date: $date, content: $content, username: $username, score: $score, postId: $postId })"
+        "MERGE (p1:Post_Reddit { id: $postId })"
+        "MERGE (u1:User_Reddit { username: $username })"
+        "MERGE (c1:Comment_Reddit { id: $id, date: $date, content: $content, username: $username, score: $score, postId: $postId })"
         "MERGE (c1)-[:COMMENTED_ON]->(p1)"
         "MERGE (c1)-[:COMMENTED_BY]->(u1)"
         "RETURN c1, u1"
@@ -151,7 +156,7 @@ for query in topics:
 
     
     #########################################
-    ### TRANSFORM (MODIFY DATA)
+    ### AWS Comprehend Function (Sentiment Analysis)
     #########################################
     
     def get_sentiment(text_list):
@@ -178,16 +183,51 @@ for query in topics:
         # Return the sentiments list sorted by index 
         return sorted(sentiments, key=lambda x:x["index"])
     
-    # Apply the UDF to your dataframe column and store the results in a new column
+    #########################################
+    ### Claimbuster Function to call api
+    #########################################
+    def invoke_claimbuster_api(input_claim):
+        try :
+            api_response = requests.get(url=api_endpoint_claimbuster+input_claim, headers={"x-api-key": api_key_claimbuster})
+            data = api_response.json()
+            if data["results"]:
+                return data["results"][0]["score"]
+            return 0
+        except :
+            return 0
+    
+    # ETL to remove empty content from posts & comments
+    data_post_frame.to_csv("s3://wklee-is459/write/reddit_raw_posts.csv")
+    data_comment_frame.to_csv("s3://wklee-is459/write/reddit_raw_comments.csv")
     data_post_frame = data_post_frame.replace("", np.nan)
+    data_comment_frame = data_comment_frame.replace("", np.nan)
     data_post_frame.dropna(inplace=True)
+    data_comment_frame.dropna(inplace=True)
+
+    # Apply translate and replace the content in place
+    data_post_frame["content"] = data_post_frame.content.apply(lambda x: translator.translate(x) if len(x)<1900 else x)
+    data_comment_frame["content"] = data_comment_frame.content.apply(lambda x: translator.translate(x) if len(x)<1900 else x)
+    
+    # ETL to remove empty content due to failed translations from posts & comments
+    data_post_frame["content"] = data_post_frame["content"].replace("", np.nan)
+    data_comment_frame["content"] = data_comment_frame["content"].replace("", np.nan)
+    data_post_frame.dropna(subset=["content"], inplace=True)
+    data_comment_frame.dropna(subset=["content"], inplace=True)
+
+    # Apply AWS Comprehend and add sentiment score as a new column in the dataframe
     post_sentiments = get_sentiment(data_post_frame.content.to_list())
     for key in post_sentiments[0].keys():
         data_post_frame[key] = [x[key] for x in post_sentiments]
     comment_sentiments = get_sentiment(data_comment_frame.content.to_list())
     for key in comment_sentiments[0].keys():
         data_comment_frame[key] = [x[key] for x in comment_sentiments]
-        
+
+    # Call claimbuster to get claim score and add it as a new column in the dataframe
+    data_post_frame["claimScore"] = data_post_frame.content.apply(invoke_claimbuster_api)
+    data_comment_frame["claimScore"] = data_comment_frame.content.apply(invoke_claimbuster_api)
+    data_post_frame.to_csv("s3://wklee-is459/write/reddit_final_posts.csv")
+    data_comment_frame.to_csv("s3://wklee-is459/write/reddit_final_comments.csv")
+
     #########################################
     ### LOAD (WRITE DATA)
     #########################################
