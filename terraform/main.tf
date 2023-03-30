@@ -23,11 +23,6 @@ data "archive_file" "reddit_aggregate_zip" {
   output_path = "../reddit/lambda_function_aggregate.zip"
 }
 
-data "archive_file" "twitter_glue_trigger_zip" {
-  type        = "zip"
-  source_file = "../glue/twitter_glue_trigger.py"
-  output_path = "../glue/twitter_glue_trigger.zip"
-}
 /*
 * Start of S3 bucket setup
 * Create bucket called is459-project
@@ -51,7 +46,7 @@ resource "aws_s3_bucket" "tf-glue-assets" {
 
 resource "aws_s3_object" "twitter_glue_script" {
   bucket = aws_s3_bucket.tf-glue-assets.id
-  key = "scripts/twitter_glue.py"
+  key    = "scripts/twitter_glue.py"
   source = "../glue/twitter_glue.py"
 }
 
@@ -202,17 +197,6 @@ resource "aws_lambda_function" "reddit_scraper_aggregate" {
   }
 }
 
-resource "aws_lambda_function" "twitter_glue_trigger_lambda" {
-  description      = "Triggers the run of twitter glue"
-  runtime          = var.lambda_runtime
-  handler          = "lambda_function_aggregate.lambda_handler"
-  function_name    = "twitter_glue_trigger"
-  filename         = data.archive_file.twitter_glue_trigger_zip.output_path
-  source_code_hash = data.archive_file.twitter_glue_trigger_zip.output_base64sha256
-  role    = aws_iam_role.scraper_role.arn
-  timeout = 60
-}
-
 /*
 * End of Lambda function definition for twitter scraper
 */
@@ -329,12 +313,11 @@ resource "aws_glue_classifier" "json_array_classifier" {
 }
 resource "aws_glue_crawler" "project_crawler" {
   name          = "project-crawler"
-  schedule = cron(0 0 * * ? *)
-  role = aws_iam_role.glue_role.arn
+  schedule      = "cron(0 0 * * ? *)"
+  role          = aws_iam_role.glue_role.arn
   database_name = aws_glue_catalog_database.project_catalog_database.name
   s3_target {
     path = "s3://${var.data_bucket}/project/"
   }
   classifiers = [aws_glue_classifier.json_array_classifier.name]
-
 }

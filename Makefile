@@ -42,4 +42,4 @@ clean_twitter_layer:
 	rm -rf $(TWITTER_DIR)/python
 
 clean_reddit_layer:
-	rm -rf $(REDDIT_DIR)/pytho
+	rm -rf $(REDDIT_DIR)/python

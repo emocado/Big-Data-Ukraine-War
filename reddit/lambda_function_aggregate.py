@@ -41,7 +41,6 @@ def lambda_handler(event, context):
         posts = []
         comments = []
         bucket_search_content = s3.list_objects_v2(Bucket=bucket, Prefix=f"reddit_initial/topic={query}/dataload={crawl_day}/").get('Contents', [])
-        # bucket_search_content = s3.list_objects_v2(Bucket=bucket, Prefix=f"reddit_initial/topic={query}/dataload=27-03-2023/").get('Contents', [])
 
         file_keys = [file['Key'] for file in bucket_search_content]
         for key in file_keys:
@@ -51,8 +50,7 @@ def lambda_handler(event, context):
     
         posts_key=f"project/reddit_posts/topic={query}/dataload={recrawl_day}/{time_stamp}_posts_aggregated.json"
         comments_key=f"project/reddit_comments/topic={query}/dataload={recrawl_day}/{time_stamp}_comments.json"
-        # posts_key=f"project/reddit_posts_aggregated_test.json"
-        # comments_key=f"project/reddit_comments_test.json"
+
         for post in posts:
             try:
                 updated_post = reddit.submission(id=post['id'])
