@@ -4,6 +4,7 @@
 
 # Import Python modules
 import sys
+
 from datetime import datetime
 import requests
 
@@ -27,6 +28,7 @@ from neo4j.exceptions import ServiceUnavailable
 
 # Import translate modules
 from deep_translator import GoogleTranslator
+
 translator = GoogleTranslator(source='auto', target='english')
 
 ## @params: [JOB_NAME]
