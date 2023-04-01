@@ -5,13 +5,14 @@
 4. Rename `.env.example` to `.env` and add your own details into the file
 
 # Infrastructure as Code
-Build the entire big data pipeline programmatically using terraform
-- Reads topic.txt for topics to scrape
-- Prerequisite: [Terraform is installed](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
-### Run for mac
-1. `make terraform init` 
-2. `terraform apply`
-### Run for windows 
-1. `cd terraform`
-2. `terraform init`
-3. `terraform apply`
+Builds the entire big data pipeline programmatically using terraform.Scraping topics are read from `topic.txt`
+## How to run
+1. [Install Terraform](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
+2. In the terraform directory, rename `terraform.tfvars.example` to `terraform.tfvars` and add your own details into the file.
+### For Mac & Linux Shell:
+1. `make terraform init`
+2. `make build_twitter_layer`
+3. `make build_reddit_layer`
+4. `make terraform_apply`
+###  For Windows Users:
+- Make your life easier, install [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install) and follow the steps above
