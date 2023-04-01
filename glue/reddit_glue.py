@@ -6,6 +6,7 @@
 import sys
 import requests
 from datetime import datetime
+from datetime import timedelta
 import numpy as np
 
 # Import pyspark modules
@@ -31,12 +32,7 @@ from deep_translator import GoogleTranslator
 translator = GoogleTranslator(source='auto', target='english')
 
 ## @params: [JOB_NAME]
-args = getResolvedOptions(sys.argv, [
-                          'JOB_NAME',
-                          'NEO_URI',
-                          'NEO_USER',
-                          'NEO_PASSWORD',
-                          'CLAIMBUSTER_API_KEY'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'NEO_URI', 'NEO_USER', 'NEO_PASSWORD', 'CLAIMBUSTER_API_KEY'])
 
 # Initialize contexts and session
 spark_context = SparkContext.getOrCreate()
@@ -57,11 +53,11 @@ password = args['NEO_PASSWORD']
 api_key_claimbuster = args['CLAIMBUSTER_API_KEY']
 api_endpoint_claimbuster = "https://idir.uta.edu/claimbuster/api/v2/score/text/"
 
-
 s3 = boto3.client('s3')
 obj = s3.get_object(Bucket=bucket, Key='topics.txt')
 topics = obj['Body'].read().decode("utf-8").split("\n")
-time_stamp = datetime.utcnow().strftime("%Y-%m-%d")
+time_stamp = (datetime.utcnow() -timedelta(days=1)).strftime("%Y-%m-%d")
+
 
 #########################################
 ### NEO4j Functions
