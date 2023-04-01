@@ -48,13 +48,14 @@ resource "aws_s3_object" "twitter_glue_script" {
   bucket = aws_s3_bucket.tf_glue_assets.id
   key    = "scripts/twitter_glue.py"
   source = "../glue/twitter_glue.py"
-  
+  etag = filemd5("../glue/twitter_glue.py")
 }
 
 resource "aws_s3_object" "reddit_glue_script" {
   bucket = aws_s3_bucket.tf_glue_assets.id
   key    = "scripts/reddit_glue.py"
   source = "../glue/reddit_glue.py"
+  etag = filemd5("../glue/reddit_glue.py")
 }
 
 resource "aws_s3_object" "topic_object" {
