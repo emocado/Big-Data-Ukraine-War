@@ -193,7 +193,7 @@ resource "aws_lambda_function" "reddit_scraper_aggregate" {
 
   role    = aws_iam_role.scraper_role.arn
   layers  = [aws_lambda_layer_version.reddit_scraper_layer.arn]
-  timeout = 600
+  timeout = 900
   environment {
     variables = {
       REDDIT_CLIENT_ID     = var.REDDIT_CLIENT_ID
