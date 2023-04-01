@@ -1,5 +1,5 @@
 #########################################
-### IMPORT LIBRARIES AND SET VARIABLES
+# IMPORT LIBRARIES AND SET VARIABLES
 #########################################
 
 # Import Python modules
@@ -31,8 +31,13 @@ from deep_translator import GoogleTranslator
 
 translator = GoogleTranslator(source='auto', target='english')
 
-## @params: [JOB_NAME]
-args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+# @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, [
+                          'JOB_NAME',
+                          'NEO_URI',
+                          'NEO_USER',
+                          'NEO_PASSWORD',
+                          'CLAIMBUSTER_API_KEY'])
 
 # Initialize contexts and session
 spark_context = SparkContext.getOrCreate()
@@ -43,14 +48,14 @@ job.init(args['JOB_NAME'], args)
 
 # Parameters
 glue_db = "project-database"
-glue_tbl = "twitter" # data catalog table
-crawl_day = datetime.utcnow().strftime("%d-%m-%Y") # dd-mm-yyyy
+glue_tbl = "twitter"  # data catalog table
+crawl_day = datetime.utcnow().strftime("%d-%m-%Y")  # dd-mm-yyyy
 folder = f"project/twitter/topic=ukraine war/dataload={crawl_day}/"
 bucket = "tf-is459-ukraine-war-data"
-uri = "neo4j+s://a4b525cc.databases.neo4j.io"
-user = "neo4j"
-password = "i9YaQe2DnNifBq7CUxnGIyt3QRv7EuavjDfUgLxa8Wc"
-api_key_claimbuster = "f5f59d0ec732451bb7cedf7b7d7d9c01"
+uri = args['NEO_URI']
+user = args['NEO_USER']
+password = args['NEO_PASSWORD']
+api_key_claimbuster = args['CLAIMBUSTER_API_KEY']
 api_endpoint_claimbuster = "https://idir.uta.edu/claimbuster/api/v2/score/text/"
 
 s3 = boto3.client('s3')
@@ -64,7 +69,7 @@ time_stamp = latest_file['Key'].replace(folder, "").rstrip(".json")
 
 
 #########################################
-### NEO4j Functions
+# NEO4j Functions
 #########################################
 def insert_neo4j_with_cypher(tx, tweet, topic):
     query = (
@@ -88,10 +93,12 @@ def insert_neo4j_with_cypher(tx, tweet, topic):
         "MERGE (u:User_Twitter {username: mentionedUser}) "
         "MERGE (t)-[:MENTIONS]->(u))"
     )
-    tx.run(query, id=tweet["id"], tweetDate=tweet["date"], timeStamp=tweet["timeStamp"], inReplyToUser=tweet["inReplyToUser"], replyCount=tweet["replyCount"], followersCount=tweet["followersCount"], content=tweet["content"], retweetCount=tweet["retweetCount"], username=tweet["username"], positive=tweet["Positive"], negative=tweet["Negative"], neutral=tweet["Neutral"], mixed=tweet["Mixed"], mentionedUsers=tweet["mentionedUsers"], claimScore=tweet["claimScore"], topic=topic)
+    tx.run(query, id=tweet["id"], tweetDate=tweet["date"], timeStamp=tweet["timeStamp"], inReplyToUser=tweet["inReplyToUser"], replyCount=tweet["replyCount"], followersCount=tweet["followersCount"], content=tweet["content"],
+           retweetCount=tweet["retweetCount"], username=tweet["username"], positive=tweet["Positive"], negative=tweet["Negative"], neutral=tweet["Neutral"], mixed=tweet["Mixed"], mentionedUsers=tweet["mentionedUsers"], claimScore=tweet["claimScore"], topic=topic)
+
 
 def create_orchestrator(uri, user, password, tweets, topic):
-    data_base_connection = GraphDatabase.driver(uri = uri, auth=(user, password))
+    data_base_connection = GraphDatabase.driver(uri=uri, auth=(user, password))
     with data_base_connection.session(database="neo4j") as session:
         # Write transactions allow the driver to handle retries and transient errors
         for tweet in tweets:
@@ -99,38 +106,41 @@ def create_orchestrator(uri, user, password, tweets, topic):
 
 
 #########################################
-### AWS Comprehend Function to get sentiment score
+# AWS Comprehend Function to get sentiment score
 #########################################
 def get_sentiment(text_list):
     # Initialize an empty list for storing sentiment results
     sentiments = []
     # Initialize an Amazon Comprehend client object with your region name (replace with your own region)
-    comprehend = boto3.client(service_name='comprehend', region_name='us-east-1')
+    comprehend = boto3.client(
+        service_name='comprehend', region_name='us-east-1')
     # Split the text list into batches of 25 documents each (the maximum number of documents per request for Amazon Comprehend)
-    batches = [text_list[i:i+25] for i in range(0,len(text_list),25)]
+    batches = [text_list[i:i+25] for i in range(0, len(text_list), 25)]
     # Iterate over each batch and call the Amazon Comprehend API to analyze sentiment
     for i, batch in enumerate(batches):
-        response = comprehend.batch_detect_sentiment(TextList=batch, LanguageCode='en')
-        # Extract the sentiment scores from the response and append them to the sentiments list as Row objects 
+        response = comprehend.batch_detect_sentiment(
+            TextList=batch, LanguageCode='en')
+        # Extract the sentiment scores from the response and append them to the sentiments list as Row objects
         for item in response['ResultList']:
             index = i*len(batch) + item['Index']
             score = item['SentimentScore']
             sentiments.append({
-                "index": index, 
-                "Positive": score["Positive"], 
-                "Negative": score["Negative"], 
-                "Neutral": score["Neutral"], 
+                "index": index,
+                "Positive": score["Positive"],
+                "Negative": score["Negative"],
+                "Neutral": score["Neutral"],
                 "Mixed": score["Mixed"]
             })
-    # Return the sentiments list sorted by index 
-    return sorted(sentiments, key=lambda x:x["index"])
+    # Return the sentiments list sorted by index
+    return sorted(sentiments, key=lambda x: x["index"])
 
 
 #########################################
-### Claimbuster Function to call api
+# Claimbuster Function to call api
 #########################################
 def invoke_claimbuster_api(input_claim):
-    api_response = requests.get(url=api_endpoint_claimbuster+input_claim, headers={"x-api-key": api_key_claimbuster})
+    api_response = requests.get(
+        url=api_endpoint_claimbuster+input_claim, headers={"x-api-key": api_key_claimbuster})
     data = api_response.json()
     if data["results"]:
         return data["results"][0]["score"]
@@ -139,23 +149,22 @@ def invoke_claimbuster_api(input_claim):
 
 for query in topics:
     #########################################
-    ### EXTRACT (READ DATA)
+    # EXTRACT (READ DATA)
     #########################################
     dynamic_frame_read = glue_context.create_dynamic_frame.from_catalog(
-        database = glue_db,
-        table_name = glue_tbl,
-        push_down_predicate =f"(topic=='{query}' and dataload=='{crawl_day}')"
+        database=glue_db,
+        table_name=glue_tbl,
+        push_down_predicate=f"(topic=='{query}')"
     )
-    
+
     # Convert dynamic frame to data frame to use standard pyspark functions
     data_frame = dynamic_frame_read.toDF().toPandas()
-    
+
     # Extract out tweets of that timestamp
     data_frame = data_frame[data_frame['timeStamp'] == time_stamp]
-    
-    
+
     #########################################
-    ### TRANSFORM (MODIFY DATA)
+    # TRANSFORM (MODIFY DATA)
     #########################################
     # Apply translate and replace the content in place
     data_frame["content"] = data_frame.content.apply(translator.translate)
@@ -164,15 +173,15 @@ for query in topics:
     sentiments = get_sentiment(data_frame.content.to_list())
     for key in sentiments[0].keys():
         data_frame[key] = [x[key] for x in sentiments]
-    
+
     # Call claimbuster to get claim score and add it as a new column in the dataframe
     data_frame["claimScore"] = data_frame.content.apply(invoke_claimbuster_api)
-    
-    
+
     #########################################
-    ### LOAD (WRITE DATA)
+    # LOAD (WRITE DATA)
     #########################################
     # Insert into neo4j
-    create_orchestrator(uri, user, password, data_frame.to_dict('records'), query)
+    create_orchestrator(uri, user, password,
+                        data_frame.to_dict('records'), query)
 
 job.commit()

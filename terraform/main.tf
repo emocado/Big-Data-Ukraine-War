@@ -39,15 +39,22 @@ resource "aws_s3_bucket" "tf-is459-project" {
 }
 
 // New test bucket
-resource "aws_s3_bucket" "tf-glue-assets" {
+resource "aws_s3_bucket" "tf_glue_assets" {
   bucket = var.glue_assets_bucket
 }
 
 
 resource "aws_s3_object" "twitter_glue_script" {
-  bucket = aws_s3_bucket.tf-glue-assets.id
+  bucket = aws_s3_bucket.tf_glue_assets.id
   key    = "scripts/twitter_glue.py"
   source = "../glue/twitter_glue.py"
+  
+}
+
+resource "aws_s3_object" "reddit_glue_script" {
+  bucket = aws_s3_bucket.tf_glue_assets.id
+  key    = "scripts/reddit_glue.py"
+  source = "../glue/reddit_glue.py"
 }
 
 resource "aws_s3_object" "topic_object" {
@@ -320,4 +327,89 @@ resource "aws_glue_crawler" "project_crawler" {
     path = "s3://${var.data_bucket}/project/"
   }
   classifiers = [aws_glue_classifier.json_array_classifier.name]
+}
+
+resource "aws_iam_role" "glue_job_role" {
+  name = "glue_job_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "glue.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "glue_job_role_s3_full_access" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  role       = aws_iam_role.glue_job_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "glue_job_role_glue_service" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+  role       = aws_iam_role.glue_job_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "glue_job_role_comprehend_full_access" {
+  policy_arn = "arn:aws:iam::aws:policy/ComprehendFullAccess"
+  role       = aws_iam_role.glue_job_role.name
+}
+
+
+
+
+resource "aws_glue_job" "twitter_glue" {
+  name         = "tf-twitter-glue-job"
+  timeout      = 2880
+  role_arn     = aws_iam_role.glue_job_role.arn
+  glue_version = "3.0"
+
+  default_arguments = {
+    "--additional-python-modules" = "neo4j==5.6.0,deep-translator==1.10.1"
+    "--job-language"              = "python"
+    "--NEO_URI"                   = var.NEO_URI
+    "--NEO_USER"                  = var.NEO_USER
+    "--NEO_PASSWORD"              = var.NEO_PASSWORD
+    "--CLAIMBUSTER_API_KEY"       = var.CLAIMBUSTER_API_KEY
+  }
+
+  worker_type       = "G.1X"
+  number_of_workers = 10
+  command {
+    name            = "glueetl"
+    python_version = "3"
+    script_location = "s3://${aws_s3_bucket.tf_glue_assets.bucket}/${aws_s3_object.twitter_glue_script.key}"
+  }
+
+}
+
+resource "aws_glue_job" "reddit_glue" {
+  name         = "tf-reddit-glue-job"
+  timeout      = 2880
+  role_arn     = aws_iam_role.glue_job_role.arn
+  glue_version = "3.0"
+
+  default_arguments = {
+    "--additional-python-modules" = "neo4j==5.6.0,deep-translator==1.10.1"
+    "--job-language"              = "python"
+    "--NEO_URI"                   = var.NEO_URI
+    "--NEO_USER"                  = var.NEO_USER
+    "--NEO_PASSWORD"              = var.NEO_PASSWORD
+    "--CLAIMBUSTER_API_KEY"       = var.CLAIMBUSTER_API_KEY
+  }
+
+  worker_type       = "G.1X"
+  number_of_workers = 10
+  command {
+    name            = "glueetl"
+    python_version = "3"
+    script_location = "s3://${aws_s3_bucket.tf_glue_assets.bucket}/${aws_s3_object.reddit_glue_script.key}"
+  }
+
 }

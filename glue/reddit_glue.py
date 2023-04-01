@@ -31,7 +31,12 @@ from deep_translator import GoogleTranslator
 translator = GoogleTranslator(source='auto', target='english')
 
 ## @params: [JOB_NAME]
-args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+args = getResolvedOptions(sys.argv, [
+                          'JOB_NAME',
+                          'NEO_URI',
+                          'NEO_USER',
+                          'NEO_PASSWORD',
+                          'CLAIMBUSTER_API_KEY'])
 
 # Initialize contexts and session
 spark_context = SparkContext.getOrCreate()
@@ -46,10 +51,10 @@ glue_post_tbl = "reddit_posts"
 glue_comment_tbl = "reddit_comments"
 bucket = "tf-is459-ukraine-war-data"
 s3_write_path = f"s3://{bucket}"
-uri = "neo4j+s://d8109db2.databases.neo4j.io"
-user = "neo4j"
-password = "xfAEG2S-6F_6XHJr3pcpUUm5PRjpa7YtsV-Ol3dkuY0"
-api_key_claimbuster = "f5f59d0ec732451bb7cedf7b7d7d9c01"
+uri = args['NEO_URI']
+user = args['NEO_USER']
+password = args['NEO_PASSWORD']
+api_key_claimbuster = args['CLAIMBUSTER_API_KEY']
 api_endpoint_claimbuster = "https://idir.uta.edu/claimbuster/api/v2/score/text/"
 
 

@@ -8,7 +8,8 @@ print('Loading function')
 
 s3 = boto3.client('s3')
 glue = boto3.client('glue')
-gluejobname = "twitter-comprehend-glue-job-v2"
+gluejobname = "tf-twitter-glue-job"
+# gluejobname = "twitter-comprehend-glue-job-v2"
 
 def lambda_handler(event, context):
     # Set the start and end dates for the search (in UTC timezone)
