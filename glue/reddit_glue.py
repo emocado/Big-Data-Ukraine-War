@@ -56,9 +56,9 @@ api_endpoint_claimbuster = "https://idir.uta.edu/claimbuster/api/v2/score/text/"
 s3 = boto3.client('s3')
 obj = s3.get_object(Bucket=bucket, Key='topics.txt')
 topics = obj['Body'].read().decode("utf-8").split("\n")
-time_stamp = (datetime.utcnow() -timedelta(days=1)).strftime("%Y-%m-%d")
+crawl_date = datetime.utcnow().strftime("%d-%m-%Y")
 
-
+print("Start")
 #########################################
 ### NEO4j Functions
 #########################################
@@ -99,7 +99,9 @@ def create_comment_relationships(tx, id, date, content, username, score, post_id
 
 
 def create_orchestrator(uri, user, password, posts, comments):
+    print("Creating Graph Driver")
     data_base_connection = GraphDatabase.driver(uri=uri, auth=(user, password))
+    print("Establishing connection")
     with data_base_connection.session(database="neo4j") as session:
         # Write transactions allow the driver to handle retries and transient errors
         for post in posts:
@@ -132,19 +134,62 @@ def delete_database(uri, user, password):
         for row in result:
             print(f"Deleted: {row['n']}")
 
+#########################################
+### AWS Comprehend Function (Sentiment Analysis)
+#########################################
+
+def get_sentiment(text_list):
+    # Initialize an empty list for storing sentiment results
+    sentiments = []
+    # Initialize an Amazon Comprehend client object with your region name (replace with your own region)
+    comprehend = boto3.client(service_name='comprehend', region_name='us-east-1')
+    # Split the text list into batches of 25 documents each (the maximum number of documents per request for Amazon Comprehend)
+    batches = [text_list[i:i+25] for i in range(0, len(text_list), 25)]
+    # batches = [[x[:4500] for x in text_list[i:i+25] if x] for i in range(0,len(text_list),25)]
+    # Iterate over each batch and call the Amazon Comprehend API to analyze sentiment
+    for i, batch in enumerate(batches):
+        response = comprehend.batch_detect_sentiment(TextList=batch, LanguageCode='en')
+        # Extract the sentiment scores from the response and append them to the sentiments list as Row objects 
+        for item in response['ResultList']:
+            index = i*len(batch) + item['Index']
+            score = item['SentimentScore']
+            sentiments.append({
+                "index": index, 
+                "Positive": score["Positive"], 
+                "Negative": score["Negative"], 
+                "Neutral": score["Neutral"], 
+                "Mixed": score["Mixed"]
+            })
+    # Return the sentiments list sorted by index 
+    return sorted(sentiments, key=lambda x:x["index"])
+
+#########################################
+### Claimbuster Function to call api
+#########################################
+def invoke_claimbuster_api(input_claim):
+    try :
+        api_response = requests.get(url=api_endpoint_claimbuster+input_claim, headers={"x-api-key": api_key_claimbuster})
+        data = api_response.json()
+        if data["results"]:
+            return data["results"][0]["score"]
+        return 0
+    except :
+        return 0
+
 for query in topics:
     #########################################
     ### EXTRACT (READ DATA)
     #########################################
+    print(query)
     dynamic_post_frame_read = glue_context.create_dynamic_frame.from_catalog(
         database = glue_db,
         table_name = glue_post_tbl,
-        push_down_predicate =f"(topic == '{query}')"
+        push_down_predicate =f"topic == '{query}' and dataload == '{crawl_date}'"
     )
     dynamic_comment_frame_read = glue_context.create_dynamic_frame.from_catalog(
         database = glue_db,
         table_name = glue_comment_tbl,
-        push_down_predicate =f"(topic == '{query}')"
+        push_down_predicate =f"topic == '{query}' and dataload == '{crawl_date}'"
     )
     
     # Convert dynamic frame to data frame to use standard pyspark functions
@@ -152,50 +197,9 @@ for query in topics:
     data_comment_frame = dynamic_comment_frame_read.toDF().toPandas()
     
     # Extract out posts and comments of that timestamp
-    data_post_frame = data_post_frame[data_post_frame['date'].str.startswith(time_stamp)]
-    data_comment_frame = data_comment_frame[data_comment_frame['date'].str.startswith(time_stamp)]
-
-    
-    #########################################
-    ### AWS Comprehend Function (Sentiment Analysis)
-    #########################################
-    
-    def get_sentiment(text_list):
-        # Initialize an empty list for storing sentiment results
-        sentiments = []
-        # Initialize an Amazon Comprehend client object with your region name (replace with your own region)
-        comprehend = boto3.client(service_name='comprehend', region_name='us-east-1')
-        # Split the text list into batches of 25 documents each (the maximum number of documents per request for Amazon Comprehend)
-        batches = [[x[:4500] for x in text_list[i:i+25] if x] for i in range(0,len(text_list),25)]
-        # Iterate over each batch and call the Amazon Comprehend API to analyze sentiment
-        for i, batch in enumerate(batches):
-            response = comprehend.batch_detect_sentiment(TextList=batch, LanguageCode='en')
-            # Extract the sentiment scores from the response and append them to the sentiments list as Row objects 
-            for item in response['ResultList']:
-                index = i*len(batch) + item['Index']
-                score = item['SentimentScore']
-                sentiments.append({
-                    "index": index, 
-                    "Positive": score["Positive"], 
-                    "Negative": score["Negative"], 
-                    "Neutral": score["Neutral"], 
-                    "Mixed": score["Mixed"]
-                })
-        # Return the sentiments list sorted by index 
-        return sorted(sentiments, key=lambda x:x["index"])
-    
-    #########################################
-    ### Claimbuster Function to call api
-    #########################################
-    def invoke_claimbuster_api(input_claim):
-        try :
-            api_response = requests.get(url=api_endpoint_claimbuster+input_claim, headers={"x-api-key": api_key_claimbuster})
-            data = api_response.json()
-            if data["results"]:
-                return data["results"][0]["score"]
-            return 0
-        except :
-            return 0
+    print(data_post_frame)
+    data_post_frame = data_post_frame
+    data_comment_frame = data_comment_frame
     
     # ETL to remove empty content from posts & comments
     data_post_frame.to_csv("s3://wklee-is459/write/reddit_raw_posts.csv")
@@ -206,23 +210,27 @@ for query in topics:
     data_comment_frame.dropna(inplace=True)
 
     # Apply translate and replace the content in place
-    data_post_frame["content"] = data_post_frame.content.apply(lambda x: translator.translate(x) if len(x)<1900 else x)
-    data_comment_frame["content"] = data_comment_frame.content.apply(lambda x: translator.translate(x) if len(x)<1900 else x)
-    
+    data_post_frame["content"] = data_post_frame.content.apply(translator.translate)
+    data_comment_frame["content"] = data_comment_frame.content.apply(translator.translate)
+    print("Translated")
     # ETL to remove empty content due to failed translations from posts & comments
     data_post_frame["content"] = data_post_frame["content"].replace("", np.nan)
     data_comment_frame["content"] = data_comment_frame["content"].replace("", np.nan)
     data_post_frame.dropna(subset=["content"], inplace=True)
     data_comment_frame.dropna(subset=["content"], inplace=True)
+    print("Replaced")
 
+    print("Getting sentiments")
     # Apply AWS Comprehend and add sentiment score as a new column in the dataframe
     post_sentiments = get_sentiment(data_post_frame.content.to_list())
+    print(f"Sentiments: {post_sentiments}")
     for key in post_sentiments[0].keys():
         data_post_frame[key] = [x[key] for x in post_sentiments]
     comment_sentiments = get_sentiment(data_comment_frame.content.to_list())
     for key in comment_sentiments[0].keys():
         data_comment_frame[key] = [x[key] for x in comment_sentiments]
 
+    print("Writing final")
     # Call claimbuster to get claim score and add it as a new column in the dataframe
     data_post_frame["claimScore"] = data_post_frame.content.apply(invoke_claimbuster_api)
     data_comment_frame["claimScore"] = data_comment_frame.content.apply(invoke_claimbuster_api)
@@ -232,7 +240,7 @@ for query in topics:
     #########################################
     ### LOAD (WRITE DATA)
     #########################################
-    
+    print("Ochestrating")
     create_orchestrator(uri, user, password, data_post_frame.to_dict('records'), data_comment_frame.to_dict('records'))
     
 job.commit()

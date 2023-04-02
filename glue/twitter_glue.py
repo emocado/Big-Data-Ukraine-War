@@ -5,7 +5,7 @@
 # Import Python modules
 import sys
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 
 # Import pyspark modules
@@ -49,7 +49,7 @@ job.init(args['JOB_NAME'], args)
 # Parameters
 glue_db = "project-database"
 glue_tbl = "twitter"  # data catalog table
-crawl_day = datetime.utcnow().strftime("%d-%m-%Y")  # dd-mm-yyyy
+crawl_day = (datetime.utcnow()  - timedelta(days=1)).strftime("%d-%m-%Y")  # dd-mm-yyyy
 folder = f"project/twitter/topic=ukraine war/dataload={crawl_day}/"
 bucket = "tf-is459-ukraine-war-data"
 uri = args['NEO_URI']
@@ -154,14 +154,15 @@ for query in topics:
     dynamic_frame_read = glue_context.create_dynamic_frame.from_catalog(
         database=glue_db,
         table_name=glue_tbl,
-        push_down_predicate=f"(topic=='{query}')"
+        push_down_predicate=f"topic=='{query}' and dataload == '{crawl_day}'"
     )
 
     # Convert dynamic frame to data frame to use standard pyspark functions
     data_frame = dynamic_frame_read.toDF().toPandas()
 
     # Extract out tweets of that timestamp
-    data_frame = data_frame[data_frame['timeStamp'] == time_stamp]
+    # data_frame = data_frame[data_frame['timeStamp'] == time_stamp]
+    data_frame = data_frame
 
     #########################################
     # TRANSFORM (MODIFY DATA)

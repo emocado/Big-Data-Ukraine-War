@@ -17,8 +17,6 @@ user_agent = os.environ.get("REDDIT_USER_AGENT")
 print('Loading function')
 
 s3 = boto3.client('s3')
-glue = boto3.client('glue')
-gluejobname = "tf-reddit-glue-job"
 
 reddit = praw.Reddit(
     client_id=client_id,
@@ -99,5 +97,4 @@ def lambda_handler(event, context):
         comments_json = json.dumps(comments)
         response1 = s3.put_object(Body=posts_json, Bucket=bucket, Key=posts_key)
         response2 = s3.put_object(Body=comments_json, Bucket=bucket, Key=comments_key)        
-        glue.start_job_run(JobName=gluejobname)
     return response1, response2 
