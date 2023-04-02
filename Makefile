@@ -3,15 +3,21 @@ TWITTER_DIR = twitter
 REDDIT_DIR = reddit
 TERRAFORM_FOLDER = terraform
 
-.PHONY: build_twitter_layer build_reddit_layer terraform_init terraform_plan terraform_apply terraform_destroy full_build 
+.PHONY: build_twitter_layer build_reddit_layer terraform_init terraform_plan terraform_apply terraform_destroy full_build init_full_build 
 
 $(TWITTER_DIR)/layer:
 	$(MAKE) clean_twitter_layer
 	cd $(TWITTER_DIR) && mkdir python
 
 $(REDDIT_DIR)/layer:
-	$(MAKE) clean_twitter_layer
+	$(MAKE) clean_reddit_layer
 	cd $(REDDIT_DIR) && mkdir python
+
+init_full_build:
+	$(MAKE) terraform_init
+	$(MAKE) build_twitter_layer
+	$(MAKE) build_reddit_layer
+	$(MAKE) terraform_apply
 
 full_build:
 	$(MAKE) build_twitter_layer
