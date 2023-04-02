@@ -48,14 +48,14 @@ resource "aws_s3_object" "twitter_glue_script" {
   bucket = aws_s3_bucket.tf_glue_assets.id
   key    = "scripts/twitter_glue.py"
   source = "../glue/twitter_glue.py"
-  etag = filemd5("../glue/twitter_glue.py")
+  etag   = filemd5("../glue/twitter_glue.py")
 }
 
 resource "aws_s3_object" "reddit_glue_script" {
   bucket = aws_s3_bucket.tf_glue_assets.id
   key    = "scripts/reddit_glue.py"
   source = "../glue/reddit_glue.py"
-  etag = filemd5("../glue/reddit_glue.py")
+  etag   = filemd5("../glue/reddit_glue.py")
 }
 
 resource "aws_s3_object" "topic_object" {
@@ -372,19 +372,22 @@ resource "aws_glue_job" "twitter_glue" {
   glue_version = "3.0"
 
   default_arguments = {
-    "--additional-python-modules" = "neo4j==5.6.0,deep-translator==1.10.1"
-    "--job-language"              = "python"
-    "--NEO_URI"                   = var.NEO_URI
-    "--NEO_USER"                  = var.NEO_USER
-    "--NEO_PASSWORD"              = var.NEO_PASSWORD
-    "--CLAIMBUSTER_API_KEY"       = var.CLAIMBUSTER_API_KEY
+    "--additional-python-modules"        = "neo4j==5.6.0,deep-translator==1.10.1"
+    "--job-language"                     = "python"
+    "--NEO_URI"                          = var.NEO_URI
+    "--NEO_USER"                         = var.NEO_USER
+    "--NEO_PASSWORD"                     = var.NEO_PASSWORD
+    "--CLAIMBUSTER_API_KEY"              = var.CLAIMBUSTER_API_KEY
+    "--job-bookmark-option"              = "job-bookmark-enable"
+    "--enable-continuous-cloudwatch-log" = "true"
+    "--enable-metrics"                   = ""
   }
 
   worker_type       = "G.1X"
   number_of_workers = 10
   command {
     name            = "glueetl"
-    python_version = "3"
+    python_version  = "3"
     script_location = "s3://${aws_s3_bucket.tf_glue_assets.bucket}/${aws_s3_object.twitter_glue_script.key}"
   }
 
@@ -397,20 +400,44 @@ resource "aws_glue_job" "reddit_glue" {
   glue_version = "3.0"
 
   default_arguments = {
-    "--additional-python-modules" = "neo4j==5.6.0,deep-translator==1.10.1"
-    "--job-language"              = "python"
-    "--NEO_URI"                   = var.NEO_URI
-    "--NEO_USER"                  = var.NEO_USER
-    "--NEO_PASSWORD"              = var.NEO_PASSWORD
-    "--CLAIMBUSTER_API_KEY"       = var.CLAIMBUSTER_API_KEY
+    "--additional-python-modules"        = "neo4j==5.6.0,deep-translator==1.10.1"
+    "--job-language"                     = "python"
+    "--NEO_URI"                          = var.NEO_URI
+    "--NEO_USER"                         = var.NEO_USER
+    "--NEO_PASSWORD"                     = var.NEO_PASSWORD
+    "--CLAIMBUSTER_API_KEY"              = var.CLAIMBUSTER_API_KEY
+    "--job-bookmark-option"              = "job-bookmark-enable"
+    "--enable-continuous-cloudwatch-log" = "true"
+    "--enable-metrics"                   = ""
   }
 
   worker_type       = "G.1X"
   number_of_workers = 10
   command {
     name            = "glueetl"
-    python_version = "3"
+    python_version  = "3"
     script_location = "s3://${aws_s3_bucket.tf_glue_assets.bucket}/${aws_s3_object.reddit_glue_script.key}"
   }
+}
 
+
+resource "aws_glue_trigger" "reddit_glue_trigger" {
+  name = "reddit_glue_trigger"
+  type = "SCHEDULED"
+  start_on_creation = true
+  schedule = "cron(0 1 * * ? *)"
+  actions {
+    job_name = aws_glue_job.reddit_glue.name
+  }  
+}
+
+
+resource "aws_glue_trigger" "twitter_glue_trigger" {
+  name = "twitter_glue_trigger"
+  type = "SCHEDULED"
+  start_on_creation = true
+  schedule = "cron(0 1 * * ? *)"
+  actions {
+    job_name = aws_glue_job.twitter_glue.name
+  }
 }
