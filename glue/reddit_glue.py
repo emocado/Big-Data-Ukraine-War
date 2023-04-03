@@ -241,12 +241,12 @@ for query in topics:
     data_post_frame["content"] = data_post_frame["content"].replace("", np.nan)
     data_post_frame["content"] = data_post_frame["content"].replace("[deleted]", np.nan)
     data_post_frame["username"] = data_post_frame["username"].replace("None", np.nan)
-    data_post_frame["username"] = data_post_frame["username"].strip().replace("", np.nan)
+    data_post_frame["username"] = data_post_frame["username"].replace("", np.nan)
 
     data_comment_frame["content"] = data_comment_frame["content"].replace("", np.nan)
     data_comment_frame["content"] = data_comment_frame["content"].replace("[deleted]", np.nan)
     data_comment_frame["username"] = data_comment_frame["username"].replace("None", np.nan)
-    data_comment_frame["username"] = data_comment_frame["username"].strip().replace("", np.nan)
+    data_comment_frame["username"] = data_comment_frame["username"].replace("", np.nan)
 
     data_post_frame.dropna(subset=["content"], inplace=True)
     data_post_frame.dropna(subset=["username"], inplace=True)
