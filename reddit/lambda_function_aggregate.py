@@ -35,7 +35,7 @@ def lambda_handler(event, context):
 
     # post_date = datetime.utcnow()
     time_stamp = datetime.utcnow().replace(second=0, microsecond=0)
-    crawl_day = (datetime.utcnow() - timedelta(days=1)).strftime("%d-%m-%Y") # dd-mm-yyyy
+    crawl_day = (datetime.utcnow() - timedelta(days=2)).strftime("%d-%m-%Y") # dd-mm-yyyy
     recrawl_day = time_stamp.strftime("%d-%m-%Y")
     bucket="tf-is459-ukraine-war-data"
     obj = s3.get_object(Bucket=bucket, Key='topics.txt')

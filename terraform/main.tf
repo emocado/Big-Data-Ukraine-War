@@ -2,9 +2,9 @@ provider "aws" {
   region = "us-east-1"
 }
 
-/*
-*   Preparing lambda function file for twitter scraper
-*/
+########################
+### LAMBDA FUNCTIONS ###
+########################
 data "archive_file" "twitter_zip" {
   type        = "zip"
   source_file = "../twitter/lambda_function.py"
@@ -23,27 +23,23 @@ data "archive_file" "reddit_aggregate_zip" {
   output_path = "../reddit/lambda_function_aggregate.zip"
 }
 
-/*
-* Start of S3 bucket setup
-* Create bucket called is459-project
-* Add topics.txt into bucket, used to define topics to scrape
-*/
-resource "aws_s3_bucket" "is459-project" {
-  bucket = "is459-ukraine-war-data"
-}
 
-
-// New test bucket
+########################
+### S3 Buckets ###
+########################
+// Data Bucket
 resource "aws_s3_bucket" "tf-is459-project" {
   bucket = var.data_bucket
 }
 
-// New test bucket
+// Glue Asset bucket
 resource "aws_s3_bucket" "tf_glue_assets" {
   bucket = var.glue_assets_bucket
 }
 
-
+##################
+### S3 Objects ###
+##################
 resource "aws_s3_object" "twitter_glue_script" {
   bucket = aws_s3_bucket.tf_glue_assets.id
   key    = "scripts/twitter_glue.py"
@@ -62,16 +58,14 @@ resource "aws_s3_object" "topic_object" {
   bucket = aws_s3_bucket.tf-is459-project.id
   key    = "topics.txt"
   source = "topics.txt"
+  etag   = filemd5("topics.txt")
 }
 
-/*
-* End of S3 bucket setup
-*/
 
 
-/*
-* Start of scraper policies and role definition
-*/
+####################
+### Scraper Role ###
+####################
 data "aws_iam_policy_document" "scraper_policy" {
   statement {
     sid    = ""
@@ -108,13 +102,10 @@ resource "aws_iam_role_policy_attachment" "scraper_role_glue_service_policy_atta
   role       = aws_iam_role.scraper_role.name
 }
 
-/*
-* End of scraper policies and role definition
-*/
 
-/*
-* Start of Lambda layer definition
-*/
+#####################
+### Lambda Layers ###
+#####################
 resource "aws_lambda_layer_version" "twitter_scraper_layer" {
   layer_name = "twitter-scraper"
   compatible_runtimes = [
@@ -138,16 +129,13 @@ resource "aws_lambda_layer_version" "reddit_scraper_layer" {
   description = "Layer that includes boto3 and praw"
 }
 
-/*
-* End of Lambda layer definition
-*/
 
 
 
-/*
-* Start of Lambda function definition for twitter scraper
-*/
 
+########################
+### Lambda Functions ###
+########################
 resource "aws_lambda_function" "twitter_scraper" {
   description      = "Twitter scraper that scrapes tweets based on topics.txt"
   runtime          = var.lambda_runtime
@@ -205,14 +193,10 @@ resource "aws_lambda_function" "reddit_scraper_aggregate" {
   }
 }
 
-/*
-* End of Lambda function definition for twitter scraper
-*/
 
-
-/*
-* Start of Scraper Lambda Trigger definition 
-*/
+###########################
+### Trugger Definitions ###
+###########################
 resource "aws_cloudwatch_event_rule" "scraper_trigger_15_minutes" {
   name        = "scraper_trigger_15_minutes"
   description = "Triggers every 15 minutes"
@@ -270,14 +254,10 @@ resource "aws_lambda_permission" "cloudwatch_lambda_trigger_reddit_aggregate" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.scraper_trigger_daily_midnight.arn
 }
-/*
-* End of Scraper Lambda Trigger definition 
-*/
 
-/*
-* Crawler code
-*/
-
+#################
+### Glue Role ###
+#################
 resource "aws_iam_role" "glue_role" {
   name = "glue_role"
 
@@ -310,15 +290,24 @@ resource "aws_iam_role_policy_attachment" "glue_role_glue_service_policy_attachm
   role       = aws_iam_role.glue_role.name
 }
 
+####################
+### Glue Catalog ###
+####################
 resource "aws_glue_catalog_database" "project_catalog_database" {
   name = "project-database"
 }
+##########################
+### Crawler Classifier ###
+##########################
 resource "aws_glue_classifier" "json_array_classifier" {
   name = "json_array_classifier"
   json_classifier {
     json_path = "$[*]"
   }
 }
+####################
+### Glue Crawler ###
+####################
 resource "aws_glue_crawler" "project_crawler" {
   name          = "project-crawler"
   schedule      = "cron(0 0 * * ? *)"
@@ -330,6 +319,9 @@ resource "aws_glue_crawler" "project_crawler" {
   classifiers = [aws_glue_classifier.json_array_classifier.name]
 }
 
+#####################
+### Glue Job Role ###
+#####################
 resource "aws_iam_role" "glue_job_role" {
   name = "glue_job_role"
 
@@ -364,7 +356,9 @@ resource "aws_iam_role_policy_attachment" "glue_job_role_comprehend_full_access"
 
 
 
-
+#################
+### Glue Jobs ###
+#################
 resource "aws_glue_job" "twitter_glue" {
   name         = "tf-twitter-glue-job"
   timeout      = 2880
@@ -420,7 +414,9 @@ resource "aws_glue_job" "reddit_glue" {
   }
 }
 
-
+#########################
+### Glue Job Triggers ###
+#########################
 resource "aws_glue_trigger" "reddit_glue_trigger" {
   name = "reddit_glue_trigger"
   type = "SCHEDULED"
@@ -435,8 +431,9 @@ resource "aws_glue_trigger" "reddit_glue_trigger" {
 resource "aws_glue_trigger" "twitter_glue_trigger" {
   name = "twitter_glue_trigger"
   type = "SCHEDULED"
-  start_on_creation = true
   schedule = "cron(0 1 * * ? *)"
+  start_on_creation = true
+
   actions {
     job_name = aws_glue_job.twitter_glue.name
   }
