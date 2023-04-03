@@ -1,4 +1,3 @@
-VENV_NAME = venv
 TWITTER_DIR = twitter
 REDDIT_DIR = reddit
 TERRAFORM_FOLDER = terraform

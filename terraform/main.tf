@@ -195,7 +195,7 @@ resource "aws_lambda_function" "reddit_scraper_aggregate" {
 
 
 ###########################
-### Trugger Definitions ###
+### Trigger Definitions ###
 ###########################
 resource "aws_cloudwatch_event_rule" "scraper_trigger_15_minutes" {
   name        = "scraper_trigger_15_minutes"
@@ -279,7 +279,6 @@ resource "aws_iam_role_policy_attachment" "glue_role_lambda_basic_policy_attachm
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" # Attach the basic Lambda execution role
   role       = aws_iam_role.glue_role.name
 }
-
 
 resource "aws_iam_role_policy_attachment" "glue_role_s3_full_access_policy_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess" # Attach the Amazon S3 full access policy
@@ -418,20 +417,20 @@ resource "aws_glue_job" "reddit_glue" {
 ### Glue Job Triggers ###
 #########################
 resource "aws_glue_trigger" "reddit_glue_trigger" {
-  name = "reddit_glue_trigger"
-  type = "SCHEDULED"
+  name              = "reddit_glue_trigger"
+  type              = "SCHEDULED"
   start_on_creation = true
-  schedule = "cron(0 1 * * ? *)"
+  schedule          = "cron(0 1 * * ? *)"
   actions {
     job_name = aws_glue_job.reddit_glue.name
-  }  
+  }
 }
 
 
 resource "aws_glue_trigger" "twitter_glue_trigger" {
-  name = "twitter_glue_trigger"
-  type = "SCHEDULED"
-  schedule = "cron(0 1 * * ? *)"
+  name              = "twitter_glue_trigger"
+  type              = "SCHEDULED"
+  schedule          = "cron(0 1 * * ? *)"
   start_on_creation = true
 
   actions {
