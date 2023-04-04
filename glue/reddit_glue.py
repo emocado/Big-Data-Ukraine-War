@@ -91,12 +91,10 @@ def create_post_relationships(tx, id, date, title, content, username, commentCou
 
 def create_comment_relationships(tx, id, date, content, username, score, post_id, topic, positive, negative, neutral, mixed, claimScore ):
     query = (
-        "MERGE (p1:Post_Reddit { id: $postId })"
-        "MERGE (u1:User_Reddit { username: $username })"
-        "MERGE (c1:Comment_Reddit { id: $id, date: $date, content: $content, username: $username, score: $score, postId: $postId, \
-             topic: $topic, positive: $positive, negative: $negative, neutral: $neutral, mixed: $mixed, claimScore: $claimScore })"
-        "MERGE (c1)-[:COMMENTED_ON]->(p1)"
-        "MERGE (c1)-[:COMMENTED_BY]->(u1)"
+        "MATCH (p1:Post_Reddit { id: $postId }) "
+        "MERGE (c1:Comment_Reddit { id: $id, date: $date, content: $content, username: $username, score: $score, postId: $postId })-[:COMMENTED_ON]->(p1) "
+        "WITH c1 "
+        "MERGE (c1)-[:COMMENTED_BY]->(u1:User_Reddit { username: $username }) "
         "RETURN c1, u1"
     )
     result = tx.run(query, id=id, date=date, content=content,
